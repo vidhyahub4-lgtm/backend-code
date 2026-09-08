@@ -62,6 +62,7 @@ const userController = {
       accessToken,
       data: { user, sidebar },
     });
+  
   }),
 };
 

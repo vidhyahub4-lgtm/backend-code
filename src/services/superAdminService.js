@@ -1,5 +1,11 @@
 const Sidebar = require("../models/sidebar");
 const { uploadImageToCloudflare } = require("./cloudflare.service");
+const Board = require("../models/board");
+const InstituteType = require('../models/instituteType');
+const State = require('../models/state');
+const City = require('../models/city');
+const Class = require('../models/class');
+const Section = require('../models/section');
 
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
@@ -22,6 +28,84 @@ const superAdminService = {
     });
     return await sidebar.save();
   },
+
+  createBoard: async ({ board, startMonth , userType}) => {
+    const newBoard = new Board({
+      board,
+      startMonth,
+      userType,
+    });
+    return await newBoard.save();
+  },
+  getBoard: async () => {
+    return await Board.find();
+  },
+
+  createInstituteType: async ({ instituteType, userId }) => {
+    const newInstituteType = new InstituteType({
+      instituteType,
+      createdBy: userId,
+    });
+    return await newInstituteType.save();
+  },
+
+  getInstituteType: async () => {
+    return await InstituteType.find();
+  },
+
+  createState: async ({ stateName, userId }) => {
+    const newState = new State({
+      stateName,
+      createdBy: userId,
+    });
+    return await newState.save();
+  },
+
+  getState: async () => {
+    return await State.find();
+  },
+
+  createCity: async ({ cityName, stateId,userId, pinCode }) => {
+    const newCity = new City({
+      cityName,
+      stateId,
+      createdBy: userId,
+      pinCode,
+    });
+    return await newCity.save();
+  },
+
+  getCity: async () => {
+    return await City.find().populate('stateId', 'State').select('-createdAt -updatedAt');
+  },
+
+  createClass: async ({ className, classInWord, userId }) => {
+    const newClass = new Class({
+      className,
+      classInWord,
+      createdBy: userId,
+      
+    });
+    return await newClass.save();
+  },
+
+  getClass: async () => {
+    return await Class.find().select('-createdAt -updatedAt');
+  },
+
+  createSection: async ({ sectionName, classId, userId }) => {
+    const newSection = new Section({
+      sectionName,
+      classId,
+      createdBy: userId,
+    });
+    return await newSection.save();
+  },
+
+  getSection: async () => {
+    return await Section.find().populate('classId', 'className').select('-createdAt -updatedAt');
+  },
+
 };
 
 module.exports = superAdminService;

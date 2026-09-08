@@ -45,8 +45,8 @@ const superAdminController = {
       link,
       image: imagePath,
       permission: permissionArray,
-       children: childrenArray,
-       order
+      children: childrenArray,
+      order,
     });
     res.status(201).json({
       success: true,
@@ -55,8 +55,168 @@ const superAdminController = {
     });
   }),
   createBoard: asyncHandler(async (req, res) => {
-    consle.log('board crated');
-  })
+    const { userType } = req.user.userType;
+    const { board, startMonth } = req.body;
+    // console.log(board, startMonth, userType);
+    if(!board || !startMonth || !userType){
+      throw new AppError("board, startMonth and userType are required", 400);
+    }
+    const result = await superAdminService.createBoard({
+      board,
+      startMonth,
+      userType,
+    });
+    res.status(201).json({
+      success: true,
+      message: "Board created successfully",
+      board: result,
+    });
+  }),
+  getBoard: asyncHandler(async (req, res) => {
+    const boards = await superAdminService.getBoard();
+    res.status(200).json({
+      success: true,
+      message: "Boards fetched successfully",
+      boards,
+    });
+  }),
+  createInstituteType: asyncHandler(async (req, res) => {
+    const { instituteType } = req.body;
+    const { userId} = req.user._id
+    const result = await superAdminService.createInstituteType({
+      instituteType,userId
+    })
+    res.status(201).json({
+      success: true,
+      message: "Institute type created successfully",
+      result,
+    })
+  }),
+
+  getInstituteType: asyncHandler(async (req, res) => {
+    const instituteTypes = await superAdminService.getInstituteType();
+    res.status(200).json({
+      success: true,
+      message: "Institute types fetched successfully",
+      instituteTypes,
+    });
+  }),
+
+  createState: asyncHandler(async (req, res) => {
+    const { stateName } = req.body;
+    const { userId } = req.user._id;
+    if(!stateName || !userId){
+      throw new AppError("stateName and userId are required", 400);
+    }
+    if (!stateName) {
+      throw new AppError("State name is required", 400);
+    }
+    const result = await superAdminService.createState({
+      stateName,
+      userId,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "State created successfully",
+      state: result,
+    });
+  }),
+
+  getState: asyncHandler(async (req, res) => {
+    const states = await superAdminService.getState();
+    res.status(200).json({
+      success: true,
+      message: "States fetched successfully",
+      states,
+    });
+  }),
+
+  createCity: asyncHandler(async (req, res) => {
+    const { cityName, stateId,pinCode } = req.body;
+    const { userId } = req.user._id;
+    if (!cityName || !stateId || !pinCode) {
+      throw new AppError("cityName, stateId and pinCode are required", 400);
+    }
+    const result = await superAdminService.createCity({
+      cityName,
+      stateId,
+      userId,
+      pinCode
+    });
+    res.status(201).json({
+      success: true,
+      message: "City created successfully",
+      city: result,
+    });
+  }),
+
+  getCity: asyncHandler(async (req, res) => {
+    const cities = await superAdminService.getCity();
+    res.status(200).json({
+      success: true,
+      message: "Cities fetched successfully",
+      cities,
+    });
+  }),
+
+  createClass: asyncHandler(async (req, res) => {
+    const { className, classInWord } = req.body;
+    const { userId } = req.user._id;
+    if(!className || !classInWord){
+      throw new AppError("className and classInWord are required", 400);
+    }
+    const result = await superAdminService.createClass({
+      className,
+      classInWord,
+      userId
+    });
+    res.status(201).json({
+      success: true,
+      message: "Class created successfully",
+      class: result,
+    });
+  }),
+
+  getClass: asyncHandler(async (req, res) => {
+    const classes = await superAdminService.getClass();
+    res.status(200).json({
+      success: true,
+      message: "Classes fetched successfully",
+      classes,
+    });
+  }),
+
+  createSection: asyncHandler(async (req, res) => {
+    const { sectionName, classId } = req.body;
+    const { userId } = req.user._id;
+
+    if (!sectionName || !classId) {
+      throw new AppError("sectionName and classId are required", 400);
+    }
+
+    const result = await superAdminService.createSection({
+      sectionName,
+      classId,
+      userId
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Section created successfully",
+      section: result,
+    });
+  }),
+
+  getSection: asyncHandler(async (req, res) => {
+    const sections = await superAdminService.getSection();
+    res.status(200).json({
+      success: true,
+      message: "Sections fetched successfully",
+      sections,
+    });
+  }),
+
 };
 
 module.exports = superAdminController;

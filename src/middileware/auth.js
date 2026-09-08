@@ -39,7 +39,7 @@ const authMiddleware = async (req, res, next) => {
             })
         }
 
-        console.log(user)
+        console.log('From the auth file : ',user)
         req.user = user
         next()
     } catch (error) {
