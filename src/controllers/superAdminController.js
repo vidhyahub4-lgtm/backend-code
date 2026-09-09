@@ -55,17 +55,20 @@ const superAdminController = {
     });
   }),
   createBoard: asyncHandler(async (req, res) => {
-    const { userType } = req.user.userType;
+    // console.log('req.user : ', req.user)
+    const  userId  = req.user._id;
+    
     const { board, startMonth } = req.body;
-    // console.log(board, startMonth, userType);
-    if(!board || !startMonth || !userType){
-      throw new AppError("board, startMonth and userType are required", 400);
+    // console.log(board, startMonth, userId);
+    if(!board || !startMonth || !userId){
+      throw new AppError("board, startMonth and userId are required", 400);
     }
     const result = await superAdminService.createBoard({
       board,
       startMonth,
-      userType,
+      userId,
     });
+
     res.status(201).json({
       success: true,
       message: "Board created successfully",
@@ -82,7 +85,7 @@ const superAdminController = {
   }),
   createInstituteType: asyncHandler(async (req, res) => {
     const { instituteType } = req.body;
-    const { userId} = req.user._id
+    const  userId = req.user._id
     const result = await superAdminService.createInstituteType({
       instituteType,userId
     })
@@ -104,7 +107,7 @@ const superAdminController = {
 
   createState: asyncHandler(async (req, res) => {
     const { stateName } = req.body;
-    const { userId } = req.user._id;
+    const  userId  = req.user._id;
     if(!stateName || !userId){
       throw new AppError("stateName and userId are required", 400);
     }
@@ -134,7 +137,7 @@ const superAdminController = {
 
   createCity: asyncHandler(async (req, res) => {
     const { cityName, stateId,pinCode } = req.body;
-    const { userId } = req.user._id;
+    const  userId  = req.user._id;
     if (!cityName || !stateId || !pinCode) {
       throw new AppError("cityName, stateId and pinCode are required", 400);
     }
@@ -162,7 +165,7 @@ const superAdminController = {
 
   createClass: asyncHandler(async (req, res) => {
     const { className, classInWord } = req.body;
-    const { userId } = req.user._id;
+    const  userId  = req.user._id;
     if(!className || !classInWord){
       throw new AppError("className and classInWord are required", 400);
     }
@@ -188,8 +191,8 @@ const superAdminController = {
   }),
 
   createSection: asyncHandler(async (req, res) => {
-    const { sectionName, classId } = req.body;
-    const { userId } = req.user._id;
+    const { sectionName, classId, Maxlimit } = req.body;
+    const  userId  = req.user._id;
 
     if (!sectionName || !classId) {
       throw new AppError("sectionName and classId are required", 400);
@@ -198,7 +201,8 @@ const superAdminController = {
     const result = await superAdminService.createSection({
       sectionName,
       classId,
-      userId
+      userId,
+      Maxlimit
     });
 
     res.status(201).json({

@@ -20,6 +20,10 @@ const sectionSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    Maxlimit:{
+      type: Number,
+      default: 0
+    }
   },
   {
     timestamps: true,

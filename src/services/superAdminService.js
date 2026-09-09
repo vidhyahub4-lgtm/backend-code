@@ -29,11 +29,11 @@ const superAdminService = {
     return await sidebar.save();
   },
 
-  createBoard: async ({ board, startMonth , userType}) => {
+  createBoard: async ({ board, startMonth , userId}) => {
     const newBoard = new Board({
-      board,
+      boardName:board,
       startMonth,
-      userType,
+      createdBy:userId,
     });
     return await newBoard.save();
   },
@@ -93,11 +93,12 @@ const superAdminService = {
     return await Class.find().select('-createdAt -updatedAt');
   },
 
-  createSection: async ({ sectionName, classId, userId }) => {
+  createSection: async ({ sectionName, classId, userId, Maxlimit }) => {
     const newSection = new Section({
       sectionName,
       classId,
       createdBy: userId,
+      Maxlimit,
     });
     return await newSection.save();
   },
