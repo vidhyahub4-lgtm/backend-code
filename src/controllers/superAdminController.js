@@ -221,6 +221,28 @@ const superAdminController = {
     });
   }),
 
+  createSchool: asyncHandler(async(req, res)=>{
+    const {schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType} = req.body
+
+    if(!req.file){
+      new AppError("school image is required", 400);
+    }
+
+    if(!schName || !email || !contact1 || !city || !state || !schoolCode || !admin || !selectBoard || !instituteType){
+      throw new AppError("schName, email, contact1, city, state, schoolCode, admin, selectBoard and instituteType are required", 400);
+    }
+
+    const result = await superAdminService.createSchool({
+      schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType,
+      schLogo: req.file ? req.file.path : ""
+  })
+  res.status(200).json({
+      success: true,
+      message: "school created successfully",
+      result,
+    });
+})
+
 };
 
 module.exports = superAdminController;

@@ -6,6 +6,7 @@ const State = require('../models/state');
 const City = require('../models/city');
 const Class = require('../models/class');
 const Section = require('../models/section');
+const School = require('../models/schoolModels');
 
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
@@ -106,6 +107,14 @@ const superAdminService = {
   getSection: async () => {
     return await Section.find().populate('classId', 'className').select('-createdAt -updatedAt');
   },
+
+
+  createSchool: async ({ schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType, schLogo }) => {
+    const newSchool = new School({
+      schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType, schLogo
+    });
+    return await newSchool.save();
+  }
 
 };
 

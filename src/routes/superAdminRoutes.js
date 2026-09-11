@@ -26,4 +26,7 @@ router.get('/get-class', authMiddleware, superAdminController.getClass);
 router.post('/create-section', authMiddleware,superAdminMiddleware, superAdminController.createSection);
 router.get('/get-section', authMiddleware, superAdminController.getSection);
 
+
+router.post('/create-school', authMiddleware,superAdminMiddleware, upload.single('logo'), superAdminController.createSchool);
+
 module.exports = router;
