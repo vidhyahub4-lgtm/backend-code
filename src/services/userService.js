@@ -77,7 +77,7 @@ const userService = {
       userType: user.userType,
       image: user.image,
     };
-   
+
     let accessToken = await generateAccessToken(user._id, user.userType);
     let refreshToken = await generateRefreshToken(user._id, user.userType);
 
@@ -106,6 +106,12 @@ const userService = {
       sidebar,
       accessToken,
     };
+  },
+  getAllUsersService: async () => {
+    const users = await User.find()
+      .select("-password -refreshToken")
+      .sort({ createdAt: -1 });
+    return users;
   },
 };
 

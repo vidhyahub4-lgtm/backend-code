@@ -37,7 +37,6 @@ const userController = {
     });
   }),
 
-  
   loginUser: asyncHandler(async (req, res) => {
     const { loginUserName, email, password } = req.body;
     console.log(loginUserName, email, password);
@@ -50,7 +49,7 @@ const userController = {
       throw new AppError("loginUserName or email is required", 400);
     }
 
-    const { user, sidebar ,accessToken} = await userService.loginUserService({
+    const { user, sidebar, accessToken } = await userService.loginUserService({
       loginUserName,
       email,
       password,
@@ -62,7 +61,16 @@ const userController = {
       accessToken,
       data: { user, sidebar },
     });
-  
+  }),
+
+  getAllUsers: asyncHandler(async (req, res) => {
+    const users = await userService.getAllUsersService();
+
+    res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      users,
+    });
   }),
 };
 
