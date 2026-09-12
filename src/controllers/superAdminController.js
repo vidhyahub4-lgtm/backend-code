@@ -349,6 +349,28 @@ const superAdminController = {
       feeStructure: result,
     });
   }),
+
+  updateFeeStructureEntry: asyncHandler(async (req, res) => {
+    const { setupId, entryId, duration, payModeDuration, installment } = req.body;
+
+    if (!setupId || !entryId) {
+      throw new AppError("setupId and entryId are required", 400);
+    }
+
+    const result = await superAdminService.updateFeeStructureEntry({
+      setupId,
+      entryId,
+      duration,
+      payModeDuration,
+      installment,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Fee structure entry updated successfully",
+      feeStructure: result,
+    });
+  }),
 };
 
 module.exports = superAdminController;

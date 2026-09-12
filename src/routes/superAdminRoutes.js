@@ -34,6 +34,7 @@ router.post('/check-school-code', authMiddleware, superAdminMiddleware, superAdm
 
 router.post('/create-school-pay-mode', authMiddleware,superAdminMiddleware, superAdminController.createFeeStructure);
 router.get('/get-school-pay-mode', authMiddleware, superAdminController.getSchoolPayMode);
+router.put('/update-fee-structure-entry', authMiddleware, superAdminMiddleware, superAdminController.updateFeeStructureEntry);
 
 
 module.exports = router;

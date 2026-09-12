@@ -167,6 +167,28 @@ const superAdminService = {
       .sort({ createdAt: -1 });
   },
 
+  updateFeeStructureEntry: async ({ setupId, entryId, duration, payModeDuration, installment }) => {
+    const update = {};
+    if (duration !== undefined) update['feeStructure.$.duration'] = duration;
+    if (payModeDuration !== undefined) update['feeStructure.$.payModeDuration'] = payModeDuration;
+    if (installment !== undefined) update['feeStructure.$.installment'] = installment;
+
+    const result = await SchoolPayModeSetup.findOneAndUpdate(
+      { _id: setupId, 'feeStructure._id': entryId },
+      { $set: update },
+      { new: true }
+    )
+      .populate('schId', 'schName schoolCode')
+      .populate('feeStructure.class', 'className classInWord');
+
+    if (!result) {
+      const err = new Error('Pay mode setup or class entry not found');
+      err.statusCode = 404;
+      throw err;
+    }
+    return result;
+  },
+
 };
 
 module.exports = superAdminService;
