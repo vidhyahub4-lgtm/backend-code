@@ -28,5 +28,10 @@ router.get('/get-section', authMiddleware, superAdminController.getSection);
 
 
 router.post('/create-school', authMiddleware,superAdminMiddleware, upload.single('logo'), superAdminController.createSchool);
+router.get('/get-school', authMiddleware, superAdminController.getSchool);
+
+
+router.post('/create-school-pay-mode', authMiddleware,superAdminMiddleware, superAdminController.createFeeStructure);
+
 
 module.exports = router;

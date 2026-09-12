@@ -19,16 +19,21 @@ const schoolSchema = new mongoose.Schema(
       trim: true,
     },
 
-    city: {
-      type: String,
+    // cityId: {
+    //   type: String,
+    //   required: true,
+    //   trim: true,
+    // },
+    cityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "City",
       required: true,
-      trim: true,
     },
 
-    state: {
-      type: String,
+    stateId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "State",
       required: true,
-      trim: true,
     },
 
     schoolCode: {
@@ -55,7 +60,7 @@ const schoolSchema = new mongoose.Schema(
       trim: true,
     },
 
-    email: {
+    schemail: {
       type: String,
       required: true,
       trim: true,
@@ -69,9 +74,10 @@ const schoolSchema = new mongoose.Schema(
     },
 
     selectBoard: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"Board",
       trim: true,
+      required: true,
     },
 
     instituteType: {
@@ -84,10 +90,15 @@ const schoolSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      reqired:true
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const School = mongoose.model("School", schoolSchema);

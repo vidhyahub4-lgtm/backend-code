@@ -7,6 +7,7 @@ const City = require('../models/city');
 const Class = require('../models/class');
 const Section = require('../models/section');
 const School = require('../models/schoolModels');
+const SchoolPayModeSetup = require('../models/SchoolPayModeSetup');
 
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
@@ -109,11 +110,26 @@ const superAdminService = {
   },
 
 
-  createSchool: async ({ schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType, schLogo }) => {
+  createSchool: async ({ schName, schAdd, schInfo, cityId, stateId, schoolCode, websiteUrl, contact1, contact2, email, schemail, selectBoard, instituteType, schLogo, userId, admin }) => {
     const newSchool = new School({
-      schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType, schLogo
+      schName, schAdd, schInfo, cityId, stateId, schoolCode, websiteUrl, contact1, contact2, email, schemail, selectBoard, instituteType, schLogo, admin, createdBy: userId
     });
     return await newSchool.save();
+  },
+
+  getSchool: async () => {
+    return await School.find().populate('cityId', 'cityName').populate('stateId', 'stateName').populate('selectBoard', 'boardName').populate('instituteType', 'instituteType').select('-createdAt ');
+  },
+
+  createFeeStructure: async({ schId, schCode, session, feeStructure, userId }) => {
+    const newFeeStructure = new SchoolPayModeSetup({
+      schId,
+      schCode,
+      session,
+      feeStructure,
+      createdBy: userId
+    });
+    return await newFeeStructure.save();
   }
 
 };

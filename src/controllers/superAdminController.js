@@ -56,11 +56,11 @@ const superAdminController = {
   }),
   createBoard: asyncHandler(async (req, res) => {
     // console.log('req.user : ', req.user)
-    const  userId  = req.user._id;
-    
+    const userId = req.user._id;
+
     const { board, startMonth } = req.body;
     // console.log(board, startMonth, userId);
-    if(!board || !startMonth || !userId){
+    if (!board || !startMonth || !userId) {
       throw new AppError("board, startMonth and userId are required", 400);
     }
     const result = await superAdminService.createBoard({
@@ -85,15 +85,16 @@ const superAdminController = {
   }),
   createInstituteType: asyncHandler(async (req, res) => {
     const { instituteType } = req.body;
-    const  userId = req.user._id
+    const userId = req.user._id;
     const result = await superAdminService.createInstituteType({
-      instituteType,userId
-    })
+      instituteType,
+      userId,
+    });
     res.status(201).json({
       success: true,
       message: "Institute type created successfully",
       result,
-    })
+    });
   }),
 
   getInstituteType: asyncHandler(async (req, res) => {
@@ -107,8 +108,8 @@ const superAdminController = {
 
   createState: asyncHandler(async (req, res) => {
     const { stateName } = req.body;
-    const  userId  = req.user._id;
-    if(!stateName || !userId){
+    const userId = req.user._id;
+    if (!stateName || !userId) {
       throw new AppError("stateName and userId are required", 400);
     }
     if (!stateName) {
@@ -136,8 +137,8 @@ const superAdminController = {
   }),
 
   createCity: asyncHandler(async (req, res) => {
-    const { cityName, stateId,pinCode } = req.body;
-    const  userId  = req.user._id;
+    const { cityName, stateId, pinCode } = req.body;
+    const userId = req.user._id;
     if (!cityName || !stateId || !pinCode) {
       throw new AppError("cityName, stateId and pinCode are required", 400);
     }
@@ -145,7 +146,7 @@ const superAdminController = {
       cityName,
       stateId,
       userId,
-      pinCode
+      pinCode,
     });
     res.status(201).json({
       success: true,
@@ -165,14 +166,14 @@ const superAdminController = {
 
   createClass: asyncHandler(async (req, res) => {
     const { className, classInWord } = req.body;
-    const  userId  = req.user._id;
-    if(!className || !classInWord){
+    const userId = req.user._id;
+    if (!className || !classInWord) {
       throw new AppError("className and classInWord are required", 400);
     }
     const result = await superAdminService.createClass({
       className,
       classInWord,
-      userId
+      userId,
     });
     res.status(201).json({
       success: true,
@@ -192,7 +193,7 @@ const superAdminController = {
 
   createSection: asyncHandler(async (req, res) => {
     const { sectionName, classId, Maxlimit } = req.body;
-    const  userId  = req.user._id;
+    const userId = req.user._id;
 
     if (!sectionName || !classId) {
       throw new AppError("sectionName and classId are required", 400);
@@ -202,7 +203,7 @@ const superAdminController = {
       sectionName,
       classId,
       userId,
-      Maxlimit
+      Maxlimit,
     });
 
     res.status(201).json({
@@ -221,28 +222,101 @@ const superAdminController = {
     });
   }),
 
-  createSchool: asyncHandler(async(req, res)=>{
-    const {schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType} = req.body
+  createSchool: asyncHandler(async (req, res) => {
+    const {
+      schName,
+      schAdd,
+      schInfo,
+      cityId,
+      stateId,
+      schoolCode,
+      websiteUrl,
+      contact1,
+      contact2,
+      schemail,
+      admin,
+      selectBoard,
+      instituteType,
+    } = req.body;
+    const userId = req.user._id;
 
-    if(!req.file){
+    if (!req.file) {
       new AppError("school image is required", 400);
     }
 
-    if(!schName || !email || !contact1 || !city || !state || !schoolCode || !admin || !selectBoard || !instituteType){
-      throw new AppError("schName, email, contact1, city, state, schoolCode, admin, selectBoard and instituteType are required", 400);
+    if (
+      !schName ||
+      !schemail ||
+      !contact1 ||
+      !cityId ||
+      !stateId ||
+      !schoolCode ||
+      !admin ||
+      !selectBoard ||
+      !instituteType
+    ) {
+      throw new AppError(
+        "schName, School email, contact1, city, state, schoolCode, admin, selectBoard and instituteType are required",
+        400,
+      );
     }
 
     const result = await superAdminService.createSchool({
-      schName, schAdd, schInfo, city, state, schoolCode, websiteUrl, contact1, contact2, email, admin, selectBoard, instituteType,
-      schLogo: req.file ? req.file.path : ""
-  })
-  res.status(200).json({
+      schName,
+      schAdd,
+      schInfo,
+      cityId,
+      stateId,
+      schoolCode,
+      websiteUrl,
+      contact1,
+      contact2,
+      schemail,
+      admin,
+      selectBoard,
+      instituteType,
+      userId,
+      schLogo: req.file ? req.file.path : "",
+    });
+    res.status(200).json({
       success: true,
       message: "school created successfully",
       result,
     });
-})
+  }),
 
+  getSchool: asyncHandler(async (req, res) => {
+    const schools = await superAdminService.getSchool();
+    res.status(200).json({
+      success: true,
+      message: "Schools fetched successfully",
+      schools,
+    });
+  }),
+
+  createFeeStructure: asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const { schId, schCode, session, feeStructure } = req.body;
+
+    if (!schId || !schCode || !session || !feeStructure) {
+      throw new AppError(
+        "schId, schCode, session and feeStructure are required",
+        400,
+      );
+    }
+    const result = await superAdminService.createFeeStructure({
+      schId,
+      schCode,
+      session,
+      feeStructure,
+      userId,
+    });
+    res.status(201).json({
+      success: true,
+      message: "Fee structure created successfully",
+      feeStructure: result,
+    });
+  }),
 };
 
 module.exports = superAdminController;
