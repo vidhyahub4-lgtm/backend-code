@@ -317,6 +317,26 @@ const superAdminController = {
       feeStructure: result,
     });
   }),
+
+    checkSchoolCode: asyncHandler(async (req, res) => {
+    const { code } = req.body;
+    const userId = req.user._id;
+
+    if (!code) {
+      throw new AppError("code is required", 400);
+    }
+
+    const result = await superAdminService.checkSchoolCode({ code, userId });
+
+    res.status(200).json({
+      success: true,
+      message: result.available
+        ? "School code is available"
+        : "School code is already taken",
+      available: result.available,
+      code: result.code,
+    });
+  }),
 };
 
 module.exports = superAdminController;

@@ -8,6 +8,7 @@ const Class = require('../models/class');
 const Section = require('../models/section');
 const School = require('../models/schoolModels');
 const SchoolPayModeSetup = require('../models/SchoolPayModeSetup');
+const SchoolCode = require("../models/schoolCode");
 
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
@@ -130,7 +131,30 @@ const superAdminService = {
       createdBy: userId
     });
     return await newFeeStructure.save();
-  }
+  },
+
+    checkSchoolCode: async ({ code, userId }) => {
+    const normalized = (code || "").trim().toUpperCase();
+    const codePattern = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%*])[A-Z0-9!@#$%*]{8}$/;
+
+    if (!codePattern.test(normalized)) {
+      const err = new Error(
+        "School code must be 8 characters with at least one letter, one number, and one special character (!@#$%*)"
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    try {
+      await SchoolCode.create({ code: normalized, createdBy: userId });
+      return { code: normalized, available: true };
+    } catch (error) {
+      if (error.code === 11000) {
+        return { code: normalized, available: false };
+      }
+      throw error;
+    }
+  },
 
 };
 
