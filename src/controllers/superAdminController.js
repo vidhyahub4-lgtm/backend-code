@@ -337,6 +337,18 @@ const superAdminController = {
       code: result.code,
     });
   }),
+
+  getSchoolPayMode: asyncHandler(async (req, res) => {
+    const { schId, session } = req.query;
+
+    const result = await superAdminService.getSchoolPayMode({ schId, session });
+
+    res.status(200).json({
+      success: true,
+      message: "Pay mode setup fetched successfully",
+      feeStructure: result,
+    });
+  }),
 };
 
 module.exports = superAdminController;

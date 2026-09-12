@@ -10,6 +10,15 @@ const schoolSettingService = {
     });
     return await newSchclass.save();
 },
+
+  getSchClass: async ({ schoolID }) => {
+    const filter = schoolID ? { schoolID } : {};
+    return await SchClass.find(filter)
+      .populate("classID", "className classInWord")
+      .populate("sectionID", "sectionName Maxlimit")
+      .populate("schoolID", "schName schoolCode")
+      .sort({ createdAt: -1 });
+  },
 };
 
 module.exports = schoolSettingService;

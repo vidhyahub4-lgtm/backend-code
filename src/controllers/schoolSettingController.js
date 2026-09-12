@@ -1,6 +1,5 @@
 const asyncHandler = require("../errorHandlers/asyncHandler");
 const AppError = require("../utils/appError");
-const SchClass = require("../models/schoolModels");
 const schoolSettingService = require("../services/schoolSettingService");
 const schoolSettingController = {
   createSchClass: asyncHandler(async (req, res) => {
@@ -27,6 +26,18 @@ const schoolSettingController = {
       success: true,
       message: "School class and Section successfully",
       feeStructure: result,
+    });
+  }),
+
+  getSchClass: asyncHandler(async (req, res) => {
+    const { schoolID } = req.query;
+
+    const result = await schoolSettingService.getSchClass({ schoolID });
+
+    res.status(200).json({
+      success: true,
+      message: "School classes fetched successfully",
+      schClasses: result,
     });
   }),
 };

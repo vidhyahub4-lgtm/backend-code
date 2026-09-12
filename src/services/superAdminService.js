@@ -152,8 +152,19 @@ const superAdminService = {
       if (error.code === 11000) {
         return { code: normalized, available: false };
       }
-      throw error;
+       throw error;
     }
+  },
+
+  getSchoolPayMode: async ({ schId, session }) => {
+    const filter = {};
+    if (schId) filter.schId = schId;
+    if (session) filter.session = session;
+
+    return await SchoolPayModeSetup.find(filter)
+      .populate('schId', 'schName schoolCode')
+      .populate('feeStructure.class', 'className classInWord')
+      .sort({ createdAt: -1 });
   },
 
 };
