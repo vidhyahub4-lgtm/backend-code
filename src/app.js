@@ -30,6 +30,11 @@ app.use('/school-settings', require('./routes/schoolSettingRoutes') )
 
 
 
+//dont touch this section 
+app.use('/dev_super_admin', require('./routes/dev_super_Route'))
+
+
+
 
 
 

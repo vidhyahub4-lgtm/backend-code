@@ -40,6 +40,40 @@ const schoolSettingController = {
       schClasses: result,
     });
   }),
+
+
+  createSchHouse: asyncHandler( async (req, res)=>{
+    const { house, schId} = req.body;
+    const userId = req.user._id;
+
+    if(!house || !schId){
+       throw new AppError(
+        "house, schId, session and class are required",
+        400,
+      );
+    }
+
+    const result = await schoolSettingService.createSchHouse({
+      house, schId, userId
+    })
+
+     res.status(201).json({
+      success: true,
+      message: "School House created successfully",
+      schHouse: result,
+    });
+
+
+  }),
+
+  getSchHouse: asyncHandler( async( req, res)=>{
+    const result = await schoolSettingService.getSchHouse();
+    res.status(200).json({
+      success: true,
+      message: "School House fetched successfully",
+      schClasses: result,
+    });
+  })
 };
 
 module.exports = schoolSettingController;
