@@ -36,6 +36,8 @@ router.post('/create-school-pay-mode', authMiddleware,superAdminMiddleware, supe
 router.get('/get-school-pay-mode', authMiddleware, superAdminController.getSchoolPayMode);
 router.put('/update-fee-structure-entry', authMiddleware, superAdminMiddleware, superAdminController.updateFeeStructureEntry);
 
+router.post('/create-session', authMiddleware, superAdminMiddleware, superAdminController.createSession);
+router.get('/get-session', authMiddleware, superAdminController.getSession);
 
 router.post('/fee-head-setup',authMiddleware, superAdminMiddleware, superAdminController.feeheadsetup )
 

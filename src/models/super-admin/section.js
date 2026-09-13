@@ -5,7 +5,6 @@ const sectionSchema = new mongoose.Schema(
     sectionName: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
 
@@ -29,6 +28,10 @@ const sectionSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// A section name only needs to be unique *within* its own class —
+// "A" can exist for Class 1 and Class 2 at the same time.
+sectionSchema.index({ sectionName: 1, classId: 1 }, { unique: true });
 
 const Section = mongoose.model("Section", sectionSchema);
 

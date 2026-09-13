@@ -304,17 +304,19 @@ const superAdminController = {
         400,
       );
     }
-    const result = await superAdminService.createFeeStructure({
+    const { doc, wasCreated } = await superAdminService.createFeeStructure({
       schId,
       schCode,
       session,
       feeStructure,
       userId,
     });
-    res.status(201).json({
+    res.status(wasCreated ? 201 : 200).json({
       success: true,
-      message: "Fee structure created successfully",
-      feeStructure: result,
+      message: wasCreated
+        ? "Fee structure created successfully"
+        : "New classes added to the existing session's fee structure",
+      feeStructure: doc,
     });
   }),
 
@@ -373,7 +375,6 @@ const superAdminController = {
     });
   }),
 
-
   feeheadsetup: asyncHandler( async (req, res)=>{
     const {headtype, session, feehead} = req.body
     const userId = req.user._id
@@ -405,7 +406,30 @@ const superAdminController = {
       message: "Fee created successfully",
       feeStructure: result,
     });
-  })
+  }),
+
+  createSession: asyncHandler(async (req, res) => {
+    const { session } = req.body;
+    const userId = req.user._id;
+    if (!session) {
+      throw new AppError("session is required", 400);
+    }
+    const result = await superAdminService.createSession({ session, userId });
+    res.status(201).json({
+      success: true,
+      message: "Session created successfully",
+      session: result,
+    });
+  }),
+
+  getSession: asyncHandler(async (req, res) => {
+    const sessions = await superAdminService.getSession();
+    res.status(200).json({
+      success: true,
+      message: "Sessions fetched successfully",
+      sessions,
+    });
+  }),
 };
 
 module.exports = superAdminController;
