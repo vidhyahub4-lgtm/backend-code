@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken')
-const User = require('../models/userModel')
+const User = require('../models/super-admin/userModel')
 
 const generateAccessToken = (userId,userType) => {
     return jwt.sign({ id: userId, userType }, process.env.JWT_ACCESS_SECRET, {

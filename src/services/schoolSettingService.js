@@ -1,4 +1,4 @@
-const SchClass = require("../models/schoolClass");
+const SchClass = require("../models/school-setting/schoolClass");
 const schoolSettingService = {
   createSchClass: async ({ schoolID, schCode, sectionID, classID, userId }) => {
     let newSchclass = new SchClass({

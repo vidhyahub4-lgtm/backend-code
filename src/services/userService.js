@@ -1,7 +1,7 @@
-const User = require("../models/userModel");
+const User = require("../models/super-admin/userModel");
 const AppError = require("../utils/appError");
 const bcrypt = require("bcrypt");
-const Sidebar = require("../models/sidebar");
+const Sidebar = require("../models/super-admin/sidebar");
 const {
   generateAccessToken,
   generateRefreshToken,
