@@ -37,4 +37,12 @@ router.get('/get-school-pay-mode', authMiddleware, superAdminController.getSchoo
 router.put('/update-fee-structure-entry', authMiddleware, superAdminMiddleware, superAdminController.updateFeeStructureEntry);
 
 
+router.post('/fee-head-setup',authMiddleware, superAdminMiddleware, superAdminController.feeheadsetup )
+
+
+router.post('/fee-plan-type',authMiddleware, superAdminMiddleware,
+  superAdminController.feeplantype   
+ )
+
+
 module.exports = router;

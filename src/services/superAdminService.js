@@ -9,7 +9,8 @@ const Section = require('../models/section');
 const School = require('../models/schoolModels');
 const SchoolPayModeSetup = require('../models/SchoolPayModeSetup');
 const SchoolCode = require("../models/schoolCode");
-
+const feetype = require('../models/feeplan');
+const feeheadtype = require('../models/feeheadSetup')
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
     // if (!image) {
@@ -189,6 +190,29 @@ const superAdminService = {
     return result;
   },
 
+
+
+  createfeeheadSetup:async ({headtype, session, feehead, userId})=>{
+    const feeheads = new feeheadtype({
+      headtype,
+      session,
+      feehead,
+      createdby:userId
+
+    })
+
+
+    return await feeheads.save();
+  },
+
+  createfeeplantype: async({plan, userId})=>{
+    const plantypes = new feetype({
+      plan,
+      createdby:userId
+    })
+
+    return await plantypes.save()
+  }
 };
 
 module.exports = superAdminService;

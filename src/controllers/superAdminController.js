@@ -318,7 +318,7 @@ const superAdminController = {
     });
   }),
 
-    checkSchoolCode: asyncHandler(async (req, res) => {
+  checkSchoolCode: asyncHandler(async (req, res) => {
     const { code } = req.body;
     const userId = req.user._id;
 
@@ -351,7 +351,8 @@ const superAdminController = {
   }),
 
   updateFeeStructureEntry: asyncHandler(async (req, res) => {
-    const { setupId, entryId, duration, payModeDuration, installment } = req.body;
+    const { setupId, entryId, duration, payModeDuration, installment } =
+      req.body;
 
     if (!setupId || !entryId) {
       throw new AppError("setupId and entryId are required", 400);
@@ -371,6 +372,40 @@ const superAdminController = {
       feeStructure: result,
     });
   }),
+
+
+  feeheadsetup: asyncHandler( async (req, res)=>{
+    const {headtype, session, feehead} = req.body
+    const userId = req.user._id
+
+    if(!headtype || !session || !feehead){
+      throw new AppError("headtype, session and feehead are required", 400)
+    }
+
+    let result = await superAdminService.createfeeheadSetup({
+      headtype, session, feehead, userId
+    })
+    res.status(201).json({
+      success: true,
+      message: "Fee created successfully",
+      feeStructure: result,
+    });
+  }),
+
+
+  feeplantype: asyncHandler( async (req, res)=>{
+    const {plan} = req.body;
+    const userId = req.user._id;
+
+    const result = await superAdminService.createfeeplantype({
+      plan, userId
+    })
+   res.status(201).json({
+      success: true,
+      message: "Fee created successfully",
+      feeStructure: result,
+    });
+  })
 };
 
 module.exports = superAdminController;

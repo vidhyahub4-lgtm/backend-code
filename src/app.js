@@ -4,11 +4,11 @@ const express = require('express');
 const app = express();
 app.use(cors());
 const path = require('path');
-const dns = require('dns');
-dns.setServers([
-  '1.1.1.1',
-  '8.8.8.8'
-]);
+// const dns = require('dns');
+// dns.setServers([
+//   '1.1.1.1',
+//   '8.8.8.8'
+// ]);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
