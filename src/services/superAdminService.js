@@ -1,16 +1,16 @@
 const Sidebar = require("../models/super-admin/sidebar");
 const { uploadImageToCloudflare } = require("./cloudflare.service");
 const Board = require("../models/super-admin/board");
-const InstituteType = require('../models/super-admin/instituteType');
-const State = require('../models/super-admin/state');
-const City = require('../models/super-admin/city');
-const Class = require('../models/super-admin/class');
-const Section = require('../models/super-admin/section');
-const School = require('../models/super-admin/schoolModels');
-const SchoolPayModeSetup = require('../models/super-admin/SchoolPayModeSetup');
+const InstituteType = require("../models/super-admin/instituteType");
+const State = require("../models/super-admin/state");
+const City = require("../models/super-admin/city");
+const Class = require("../models/super-admin/class");
+const Section = require("../models/super-admin/section");
+const School = require("../models/super-admin/schoolModels");
+const SchoolPayModeSetup = require("../models/super-admin/SchoolPayModeSetup");
 const SchoolCode = require("../models/super-admin/schoolCode");
-const feetype = require('../models/super-admin/feeplan');
-const feeheadtype = require('../models/super-admin/feeheadSetup')
+const feetype = require("../models/super-admin/feeplan");
+const feeheadtype = require("../models/super-admin/feeheadSetup");
 const Session = require("../models/super-admin/session");
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
@@ -178,7 +178,13 @@ const superAdminService = {
   // Upsert: if this school + session already has a setup, only append
   // classes that aren't already in its feeStructure (skip duplicates).
   // If no setup exists yet for this school + session, create a fresh one.
-  createFeeStructure: async({ schId, schCode, session, feeStructure, userId }) => {
+  createFeeStructure: async ({
+    schId,
+    schCode,
+    session,
+    feeStructure,
+    userId,
+  }) => {
     const existing = await SchoolPayModeSetup.findOne({ schId, session });
 
     if (!existing) {
@@ -194,15 +200,15 @@ const superAdminService = {
     }
 
     const existingClassIds = new Set(
-      existing.feeStructure.map((entry) => String(entry.class))
+      existing.feeStructure.map((entry) => String(entry.class)),
     );
     const newEntries = feeStructure.filter(
-      (entry) => !existingClassIds.has(String(entry.class))
+      (entry) => !existingClassIds.has(String(entry.class)),
     );
 
     if (newEntries.length === 0) {
       const err = new Error(
-        "All selected classes already have a fee structure for this session."
+        "All selected classes already have a fee structure for this session.",
       );
       err.statusCode = 409;
       throw err;
@@ -277,26 +283,31 @@ const superAdminService = {
     }
     return result;
   },
-  createfeeheadSetup:async ({headtype, session, feehead, userId})=>{
+  createfeeheadSetup: async ({ headtype, session, feehead, userId }) => {
     const feeheads = new feeheadtype({
       headtype,
       session,
       feehead,
-      createdby:userId
-
-    })
-
+      createdby: userId,
+    });
 
     return await feeheads.save();
   },
 
-  createfeeplantype: async({plan, userId})=>{
+  createfeeplantype: async ({ plan, userId }) => {
     const plantypes = new feetype({
       plan,
-      createdby:userId
-    })
+      createdby: userId,
+    });
 
-    return await plantypes.save()
+    return await plantypes.save();
+  },
+  getFeeHeadSetup: async () => {
+    return await feeheadtype.find().sort({ createdAt: -1 });
+  },
+
+  getFeePlanType: async () => {
+    return await feetype.find().sort({ createdAt: -1 });
   },
 
   createSession: async ({ session, userId }) => {

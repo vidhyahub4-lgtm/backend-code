@@ -408,6 +408,24 @@ const superAdminController = {
     });
   }),
 
+    getFeeHeadSetup: asyncHandler(async (req, res) => {
+    const feeHeads = await superAdminService.getFeeHeadSetup();
+    res.status(200).json({
+      success: true,
+      message: "Fee heads fetched successfully",
+      feeHeads,
+    });
+  }),
+
+  getFeePlanType: asyncHandler(async (req, res) => {
+    const feePlans = await superAdminService.getFeePlanType();
+    res.status(200).json({
+      success: true,
+      message: "Fee plan types fetched successfully",
+      feePlans,
+    });
+  }),
+
   createSession: asyncHandler(async (req, res) => {
     const { session } = req.body;
     const userId = req.user._id;
