@@ -11,7 +11,7 @@ const SchoolPayModeSetup = require('../models/super-admin/SchoolPayModeSetup');
 const SchoolCode = require("../models/super-admin/schoolCode");
 const feetype = require('../models/super-admin/feeplan');
 const feeheadtype = require('../models/super-admin/feeheadSetup')
-const Session = require("../models/super-admin/session");
+
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
     // if (!image) {
@@ -299,17 +299,17 @@ const superAdminService = {
     return await plantypes.save()
   },
 
-  createSession: async ({ session, userId }) => {
-    const newSession = new Session({
-      session,
-      createdBy: userId,
-    });
-    return await newSession.save();
-  },
+  // createSession: async ({ session, userId }) => {
+  //   const newSession = new Session({
+  //     session,
+  //     createdBy: userId,
+  //   });
+  //   return await newSession.save();
+  // },
 
-  getSession: async () => {
-    return await Session.find().sort({ createdAt: -1 });
-  },
+  // getSession: async () => {
+  //   return await Session.find().sort({ createdAt: -1 });
+  // },
 };
 
 module.exports = superAdminService;
