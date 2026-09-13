@@ -408,28 +408,28 @@ const superAdminController = {
     });
   }),
 
-  createSession: asyncHandler(async (req, res) => {
-    const { session } = req.body;
-    const userId = req.user._id;
-    if (!session) {
-      throw new AppError("session is required", 400);
-    }
-    const result = await superAdminService.createSession({ session, userId });
-    res.status(201).json({
-      success: true,
-      message: "Session created successfully",
-      session: result,
-    });
-  }),
+  // createSession: asyncHandler(async (req, res) => {
+  //   const { session } = req.body;
+  //   const userId = req.user._id;
+  //   if (!session) {
+  //     throw new AppError("session is required", 400);
+  //   }
+  //   const result = await superAdminService.createSession({ session, userId });
+  //   res.status(201).json({
+  //     success: true,
+  //     message: "Session created successfully",
+  //     session: result,
+  //   });
+  // }),
 
-  getSession: asyncHandler(async (req, res) => {
-    const sessions = await superAdminService.getSession();
-    res.status(200).json({
-      success: true,
-      message: "Sessions fetched successfully",
-      sessions,
-    });
-  }),
+  // getSession: asyncHandler(async (req, res) => {
+  //   const sessions = await superAdminService.getSession();
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "Sessions fetched successfully",
+  //     sessions,
+  //   });
+  // }),
 };
 
 module.exports = superAdminController;
