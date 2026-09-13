@@ -11,6 +11,7 @@ const SchoolPayModeSetup = require('../models/super-admin/SchoolPayModeSetup');
 const SchoolCode = require("../models/super-admin/schoolCode");
 const feetype = require('../models/super-admin/feeplan');
 const feeheadtype = require('../models/super-admin/feeheadSetup')
+const Session = require("../models/super-admin/session");
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
     // if (!image) {
@@ -33,11 +34,11 @@ const superAdminService = {
     return await sidebar.save();
   },
 
-  createBoard: async ({ board, startMonth , userId}) => {
+  createBoard: async ({ board, startMonth, userId }) => {
     const newBoard = new Board({
-      boardName:board,
+      boardName: board,
       startMonth,
-      createdBy:userId,
+      createdBy: userId,
     });
     return await newBoard.save();
   },
@@ -65,11 +66,23 @@ const superAdminService = {
     return await newState.save();
   },
 
+  createSession: async ({ session, userId }) => {
+    const newSession = new Session({
+      session,
+      createdBy: userId,
+    });
+    return await newSession.save();
+  },
+
+  getSession: async () => {
+    return await Session.find().sort({ createdAt: -1 });
+  },
+
   getState: async () => {
     return await State.find();
   },
 
-  createCity: async ({ cityName, stateId,userId, pinCode }) => {
+  createCity: async ({ cityName, stateId, userId, pinCode }) => {
     const newCity = new City({
       cityName,
       stateId,
@@ -80,7 +93,9 @@ const superAdminService = {
   },
 
   getCity: async () => {
-    return await City.find().populate('stateId', 'State').select('-createdAt -updatedAt');
+    return await City.find()
+      .populate("stateId", "State")
+      .select("-createdAt -updatedAt");
   },
 
   createClass: async ({ className, classInWord, userId }) => {
@@ -88,13 +103,12 @@ const superAdminService = {
       className,
       classInWord,
       createdBy: userId,
-      
     });
     return await newClass.save();
   },
 
   getClass: async () => {
-    return await Class.find().select('-createdAt -updatedAt');
+    return await Class.find().select("-createdAt -updatedAt");
   },
 
   createSection: async ({ sectionName, classId, userId, Maxlimit }) => {
@@ -108,39 +122,105 @@ const superAdminService = {
   },
 
   getSection: async () => {
-    return await Section.find().populate('classId', 'className').select('-createdAt -updatedAt');
+    return await Section.find()
+      .populate("classId", "className")
+      .select("-createdAt -updatedAt");
   },
 
-
-  createSchool: async ({ schName, schAdd, schInfo, cityId, stateId, schoolCode, websiteUrl, contact1, contact2, email, schemail, selectBoard, instituteType, schLogo, userId, admin }) => {
+  createSchool: async ({
+    schName,
+    schAdd,
+    schInfo,
+    cityId,
+    stateId,
+    schoolCode,
+    websiteUrl,
+    contact1,
+    contact2,
+    email,
+    schemail,
+    selectBoard,
+    instituteType,
+    schLogo,
+    userId,
+    admin,
+  }) => {
     const newSchool = new School({
-      schName, schAdd, schInfo, cityId, stateId, schoolCode, websiteUrl, contact1, contact2, email, schemail, selectBoard, instituteType, schLogo, admin, createdBy: userId
+      schName,
+      schAdd,
+      schInfo,
+      cityId,
+      stateId,
+      schoolCode,
+      websiteUrl,
+      contact1,
+      contact2,
+      email,
+      schemail,
+      selectBoard,
+      instituteType,
+      schLogo,
+      admin,
+      createdBy: userId,
     });
     return await newSchool.save();
   },
 
   getSchool: async () => {
-    return await School.find().populate('cityId', 'cityName').populate('stateId', 'stateName').populate('selectBoard', 'boardName').populate('instituteType', 'instituteType').select('-createdAt ');
+    return await School.find()
+      .populate("cityId", "cityName")
+      .populate("stateId", "stateName")
+      .populate("selectBoard", "boardName")
+      .populate("instituteType", "instituteType")
+      .select("-createdAt ");
   },
 
+  // Upsert: if this school + session already has a setup, only append
+  // classes that aren't already in its feeStructure (skip duplicates).
+  // If no setup exists yet for this school + session, create a fresh one.
   createFeeStructure: async({ schId, schCode, session, feeStructure, userId }) => {
-    const newFeeStructure = new SchoolPayModeSetup({
-      schId,
-      schCode,
-      session,
-      feeStructure,
-      createdBy: userId
-    });
-    return await newFeeStructure.save();
+    const existing = await SchoolPayModeSetup.findOne({ schId, session });
+
+    if (!existing) {
+      const newFeeStructure = new SchoolPayModeSetup({
+        schId,
+        schCode,
+        session,
+        feeStructure,
+        createdBy: userId,
+      });
+      const saved = await newFeeStructure.save();
+      return { doc: saved, wasCreated: true };
+    }
+
+    const existingClassIds = new Set(
+      existing.feeStructure.map((entry) => String(entry.class))
+    );
+    const newEntries = feeStructure.filter(
+      (entry) => !existingClassIds.has(String(entry.class))
+    );
+
+    if (newEntries.length === 0) {
+      const err = new Error(
+        "All selected classes already have a fee structure for this session."
+      );
+      err.statusCode = 409;
+      throw err;
+    }
+
+    existing.feeStructure.push(...newEntries);
+    const saved = await existing.save();
+    return { doc: saved, wasCreated: false };
   },
 
-    checkSchoolCode: async ({ code, userId }) => {
+  checkSchoolCode: async ({ code, userId }) => {
     const normalized = (code || "").trim().toUpperCase();
-    const codePattern = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%*])[A-Z0-9!@#$%*]{8}$/;
+    const codePattern =
+      /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%*])[A-Z0-9!@#$%*]{8}$/;
 
     if (!codePattern.test(normalized)) {
       const err = new Error(
-        "School code must be 8 characters with at least one letter, one number, and one special character (!@#$%*)"
+        "School code must be 8 characters with at least one letter, one number, and one special character (!@#$%*)",
       );
       err.statusCode = 400;
       throw err;
@@ -153,7 +233,7 @@ const superAdminService = {
       if (error.code === 11000) {
         return { code: normalized, available: false };
       }
-       throw error;
+      throw error;
     }
   },
 
@@ -163,35 +243,40 @@ const superAdminService = {
     if (session) filter.session = session;
 
     return await SchoolPayModeSetup.find(filter)
-      .populate('schId', 'schName schoolCode')
-      .populate('feeStructure.class', 'className classInWord')
+      .populate("schId", "schName schoolCode")
+      .populate("feeStructure.class", "className classInWord")
       .sort({ createdAt: -1 });
   },
 
-  updateFeeStructureEntry: async ({ setupId, entryId, duration, payModeDuration, installment }) => {
+  updateFeeStructureEntry: async ({
+    setupId,
+    entryId,
+    duration,
+    payModeDuration,
+    installment,
+  }) => {
     const update = {};
-    if (duration !== undefined) update['feeStructure.$.duration'] = duration;
-    if (payModeDuration !== undefined) update['feeStructure.$.payModeDuration'] = payModeDuration;
-    if (installment !== undefined) update['feeStructure.$.installment'] = installment;
+    if (duration !== undefined) update["feeStructure.$.duration"] = duration;
+    if (payModeDuration !== undefined)
+      update["feeStructure.$.payModeDuration"] = payModeDuration;
+    if (installment !== undefined)
+      update["feeStructure.$.installment"] = installment;
 
     const result = await SchoolPayModeSetup.findOneAndUpdate(
-      { _id: setupId, 'feeStructure._id': entryId },
+      { _id: setupId, "feeStructure._id": entryId },
       { $set: update },
-      { new: true }
+      { new: true },
     )
-      .populate('schId', 'schName schoolCode')
-      .populate('feeStructure.class', 'className classInWord');
+      .populate("schId", "schName schoolCode")
+      .populate("feeStructure.class", "className classInWord");
 
     if (!result) {
-      const err = new Error('Pay mode setup or class entry not found');
+      const err = new Error("Pay mode setup or class entry not found");
       err.statusCode = 404;
       throw err;
     }
     return result;
   },
-
-
-
   createfeeheadSetup:async ({headtype, session, feehead, userId})=>{
     const feeheads = new feeheadtype({
       headtype,
@@ -212,7 +297,19 @@ const superAdminService = {
     })
 
     return await plantypes.save()
-  }
+  },
+
+  createSession: async ({ session, userId }) => {
+    const newSession = new Session({
+      session,
+      createdBy: userId,
+    });
+    return await newSession.save();
+  },
+
+  getSession: async () => {
+    return await Session.find().sort({ createdAt: -1 });
+  },
 };
 
 module.exports = superAdminService;
