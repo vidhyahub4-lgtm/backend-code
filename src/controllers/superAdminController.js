@@ -447,6 +447,63 @@ const superAdminController = {
       sessions,
     });
   }),
+
+
+  createlatefinesetup:asyncHandler(async (req, res) => {
+    const {
+      session,
+      class: classId,
+      selectInstallemt,
+      duedateAfter,
+      fineType,
+      amount,
+      schId
+
+    } = req.body;
+
+    // Validation
+    if (
+      !session ||
+      !classId ||
+      selectInstallemt === undefined ||
+      !duedateAfter ||
+      !fineType ||
+      !amount
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "All required fields are required",
+      });
+    }
+
+    const data = await superAdminService.createLateFineSetup({
+      session,
+      class: classId,
+      selectInstallemt,
+      duedateAfter,
+      fineType,
+      amount,
+      schId
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Late fine setup created successfully",
+      data,
+    });
+  }),
+
+   getAlllatefinesetup: asyncHandler(async (req, res) => {
+    const data = await superAdminService.getLateFineSetups();
+
+    return res.status(200).json({
+      success: true,
+      message: "Late fine setups fetched successfully",
+      data,
+    });
+  }),
+
+
 };
 
 module.exports = superAdminController;

@@ -9,9 +9,10 @@ const Section = require("../models/super-admin/section");
 const School = require("../models/super-admin/schoolModels");
 const SchoolPayModeSetup = require("../models/super-admin/SchoolPayModeSetup");
 const SchoolCode = require("../models/super-admin/schoolCode");
-const feetype = require('../models/super-admin/feeplan');
-const feeheadtype = require('../models/super-admin/feeheadSetup')
+const feetype = require("../models/super-admin/feeplan");
+const feeheadtype = require("../models/super-admin/feeheadSetup");
 const Session = require("../models/dev_super/session");
+const LateFineSetup = require("../models/super-admin/lateFineSetup");
 
 const superAdminService = {
   createSidebar: async ({ text, link, image, permission, children, order }) => {
@@ -320,6 +321,40 @@ const superAdminService = {
 
   getSession: async () => {
     return await Session.find().sort({ createdAt: -1 });
+  },
+
+  createLateFineSetup: async (data) => {
+    const lateFineSetup = await LateFineSetup.create(data);
+
+    return lateFineSetup;
+  },
+
+  getLateFineSetups: async () => {
+    const data = await LateFineSetup.find()
+      .populate({
+        path: "session",
+        select: "session",
+      })
+      .populate({
+        path: "class",
+        select: "classID sectionID ",
+        populate: [
+          {
+            path: "classID",
+            select: "className classInWord",
+          },
+          {
+            path: "sectionID",
+            select: "sectionName",
+          },
+        ],
+      })
+      .populate({
+        path: "schId",
+        select: "schName schAdd",
+      });
+
+    return data;
   },
 };
 

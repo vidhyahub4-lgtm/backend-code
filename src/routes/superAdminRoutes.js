@@ -53,4 +53,8 @@ router.post('/fee-plan-type',authMiddleware, superAdminMiddleware,
  )
 
 
+router.post('/late-fine-setup',authMiddleware, superAdminMiddleware,superAdminController.createlatefinesetup)
+router.get('/get-lat-fine-setup', authMiddleware, superAdminController.getAlllatefinesetup)
+
+
 module.exports = router;

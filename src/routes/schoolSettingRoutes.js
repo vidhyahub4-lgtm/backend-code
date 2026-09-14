@@ -11,5 +11,8 @@ router.post('/create-sch-house',authMiddleware, schoolSettingController.createSc
 router.get('/get-sch-house',authMiddleware, schoolSettingController.getSchHouse )
 
 
+router.post('/create-feeplansetup',authMiddleware, schoolSettingController.createFeePlanSetup  )
+router.get('/get-feeplansetup', authMiddleware, schoolSettingController.getAllFeePlanSetups)
+
 
 module.exports = router;
