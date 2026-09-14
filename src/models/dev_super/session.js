@@ -12,5 +12,4 @@ const sessionSchema = mongoose.Schema({
 });
 
 
-module.exports = mongoose.models.Session ||
-mongoose.model("Session", sessionSchema);
+module.exports = mongoose.model('DevSuperSession', sessionSchema)
