@@ -145,6 +145,7 @@ const superAdminService = {
     schLogo,
     userId,
     admin,
+    session
   }) => {
     const newSchool = new School({
       schName,
@@ -163,6 +164,7 @@ const superAdminService = {
       schLogo,
       admin,
       createdBy: userId,
+      session
     });
     return await newSchool.save();
   },
@@ -173,6 +175,7 @@ const superAdminService = {
       .populate("stateId", "stateName")
       .populate("selectBoard", "boardName")
       .populate("instituteType", "instituteType")
+      .populate("session", "DevSuperSession")
       .select("-createdAt ");
   },
 

@@ -256,7 +256,8 @@ const schoolSettingController = {
   }),
 
   getFeePlanType: asyncHandler(async (req, res) => {
-    const feePlans = await schoolSettingService.getFeePlanType();
+    const {schId} = req.body;
+    const feePlans = await schoolSettingService.getFeePlanType({schId});
     res.status(200).json({
       success: true,
       message: "Fee plan types fetched successfully",

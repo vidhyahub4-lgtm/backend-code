@@ -24,6 +24,7 @@ router.get('/get-fee-plan-type', authMiddleware, schoolSettingController.getFeeP
 
 //reg registartion
 router.post('/new-registration',authMiddleware,uploadStudentImage.single("Image"), schoolSettingController.createNewRegistration)
-router.get('/get-all-newregstration',authMiddleware, schoolSettingController.getAllNewRegistration )
+router.get('/get-all-newregstration',authMiddleware, schoolSettingController.getAllNewRegistration );
+
 
 module.exports = router;

@@ -21,6 +21,9 @@ const dev_super_controller={
     });
   })
 
+
+  // getAllSchoollist: a
+
 }
 
 

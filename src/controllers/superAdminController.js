@@ -237,12 +237,14 @@ const superAdminController = {
       admin,
       selectBoard,
       instituteType,
+      session
     } = req.body;
     const userId = req.user._id;
 
     if (!req.file) {
       new AppError("school image is required", 400);
     }
+    console.log('scglogo : ', req.file)
 
     if (
       !schName ||
@@ -276,7 +278,8 @@ const superAdminController = {
       selectBoard,
       instituteType,
       userId,
-      schLogo: req.file ? req.file.path : "",
+      schLogo: req.file ? req.file.filename : "",
+      session
     });
     res.status(200).json({
       success: true,

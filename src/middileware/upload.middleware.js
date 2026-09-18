@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
     const extension = path.extname(file.originalname);
 
     const fileName =
-      `sidebar-${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
+      `schlogo-${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
 
     cb(null, fileName);
   }

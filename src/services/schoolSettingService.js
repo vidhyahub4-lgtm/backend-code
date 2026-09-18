@@ -7,18 +7,57 @@ const feetype = require("../models/school-setting/feeplan");
 const feeheadtype = require("../models/school-setting/feeheadSetup");
 const schoolSettingService = {
   createSchClass: async ({ schoolID, schCode, sectionID, classID, userId }) => {
-    let newSchclass = new SchClass({
+    // Check if this class already exists
+    // for this particular school
+    const existingSchClass = await SchClass.findOne({
       schoolID,
       schCode,
-      sectionID,
       classID,
+    });
+
+    // If class already exists
+    if (existingSchClass) {
+      // Check if section is already added
+      const sectionExists = existingSchClass.sectionID.some(
+        (id) => id.toString() === sectionID.toString(),
+      );
+
+      // Add new section
+      if (!sectionExists) {
+        existingSchClass.sectionID.push(sectionID);
+
+        await existingSchClass.save();
+      }
+
+      // Return existing/updated document
+      return await SchClass.findById(existingSchClass._id)
+        .populate("classID")
+        .populate("sectionID")
+        .populate("schoolID")
+        .populate("createdBy");
+    }
+
+    // Class doesn't exist
+    // Create a new document
+    const newSchClass = await SchClass.create({
+      schoolID,
+      schCode,
+      classID,
+      sectionID: [sectionID],
       createdBy: userId,
     });
-    return await newSchclass.save();
+
+    // Return populated document
+    return await SchClass.findById(newSchClass._id)
+      .populate("classID")
+      .populate("sectionID")
+      .populate("schoolID")
+      .populate("createdBy");
   },
 
   getSchClass: async ({ schoolID }) => {
     const filter = schoolID ? { schoolID } : {};
+
     return await SchClass.find(filter)
       .populate("classID", "className classInWord")
       .populate("sectionID", "sectionName Maxlimit")
@@ -362,13 +401,13 @@ const schoolSettingService = {
 
     return await newFeePlan.save();
   },
-  
+
   getFeeHeadSetup: async ({ schId }) => {
     return await feeheadtype.find({ schId }).sort({ createdAt: -1 });
   },
 
-  getFeePlanType: async () => {
-    return await feetype.find().sort({ createdAt: -1 });
+  getFeePlanType: async ({schId}) => {
+    return await feetype.find({schId}).sort({ createdAt: -1 });
   },
 };
 
