@@ -39,18 +39,11 @@ router.put('/update-fee-structure-entry', authMiddleware, superAdminMiddleware, 
 router.post('/create-session', authMiddleware, superAdminMiddleware, superAdminController.createSession);
 router.get('/get-session', authMiddleware, superAdminController.getSession);
 
-router.post('/fee-head-setup',authMiddleware, superAdminMiddleware, superAdminController.feeheadsetup )
-router.get('/get-fee-head-setup', authMiddleware, superAdminController.getFeeHeadSetup);
 
 
-router.post('/fee-plan-type',authMiddleware, superAdminMiddleware,
-  superAdminController.feeplantype   
- )
-router.get('/get-fee-plan-type', authMiddleware, superAdminController.getFeePlanType);
-
-router.post('/fee-plan-type',authMiddleware, superAdminMiddleware,
-  superAdminController.feeplantype   
- )
+// router.post('/fee-plan-type',authMiddleware, superAdminMiddleware,
+//   superAdminController.feeplantype   
+//  )
 
 
 router.post('/late-fine-setup',authMiddleware, superAdminMiddleware,superAdminController.createlatefinesetup)

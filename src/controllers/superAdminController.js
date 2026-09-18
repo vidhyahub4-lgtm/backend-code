@@ -375,56 +375,9 @@ const superAdminController = {
     });
   }),
 
-  feeheadsetup: asyncHandler( async (req, res)=>{
-    const {headtype, session, feehead} = req.body
-    const userId = req.user._id
-
-    if(!headtype || !session || !feehead){
-      throw new AppError("headtype, session and feehead are required", 400)
-    }
-
-    let result = await superAdminService.createfeeheadSetup({
-      headtype, session, feehead, userId
-    })
-    res.status(201).json({
-      success: true,
-      message: "Fee created successfully",
-      feeStructure: result,
-    });
-  }),
 
 
-  feeplantype: asyncHandler( async (req, res)=>{
-    const {plan} = req.body;
-    const userId = req.user._id;
 
-    const result = await superAdminService.createfeeplantype({
-      plan, userId
-    })
-   res.status(201).json({
-      success: true,
-      message: "Fee created successfully",
-      feeStructure: result,
-    });
-  }),
-
-    getFeeHeadSetup: asyncHandler(async (req, res) => {
-    const feeHeads = await superAdminService.getFeeHeadSetup();
-    res.status(200).json({
-      success: true,
-      message: "Fee heads fetched successfully",
-      feeHeads,
-    });
-  }),
-
-  getFeePlanType: asyncHandler(async (req, res) => {
-    const feePlans = await superAdminService.getFeePlanType();
-    res.status(200).json({
-      success: true,
-      message: "Fee plan types fetched successfully",
-      feePlans,
-    });
-  }),
 
   createSession: asyncHandler(async (req, res) => {
     const { session } = req.body;

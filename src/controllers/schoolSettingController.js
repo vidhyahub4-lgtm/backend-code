@@ -71,10 +71,62 @@ const schoolSettingController = {
     });
   }),
 
+  // createFeePlanSetup: asyncHandler(async (req, res) => {
+  //   const { headType, session, classes, schId } = req.body;
+  //   const userId = req.user._id;
+  //   // Validation
+  //   if (!headType) {
+  //     throw new AppError("Head type is required", 400);
+  //   }
+
+  //   if (!session) {
+  //     throw new AppError("Session is required", 400);
+  //   }
+
+  //   if (!schId) {
+  //     throw new AppError("School ID is required", 400);
+  //   }
+
+  //   if (!classes || !Array.isArray(classes) || classes.length === 0) {
+  //     throw new AppError("At least one class is required", 400);
+  //   }
+
+  //   // Validate classes
+  //   for (const item of classes) {
+  //     if (!item.classID) {
+  //       throw new AppError("Class ID is required", 400);
+  //     }
+
+  //     if (
+  //       item.amount === undefined ||
+  //       item.amount === null ||
+  //       Number(item.amount) < 0
+  //     ) {
+  //       throw new AppError("Valid amount is required for every class", 400);
+  //     }
+  //   }
+
+  //   const feePlan = await schoolSettingService.createFeePlanSetup({
+  //     headType,
+  //     session,
+  //     classes,
+  //     schId,
+  //     userId,
+  //   });
+
+  //   res.status(201).json({
+  //     success: true,
+  //     message: "Fee plan setup created successfully",
+  //     data: feePlan,
+  //   });
+  // }),
+
+  // Get All Fee Plan Setups
   createFeePlanSetup: asyncHandler(async (req, res) => {
-    const { headType, session, classes, schId } = req.body;
-      const userId = req.user._id
-    // Validation
+    const { headType, session, schId, classes } = req.body;
+
+    const userId = req.user._id;
+
     if (!headType) {
       throw new AppError("Head type is required", 400);
     }
@@ -87,22 +139,23 @@ const schoolSettingController = {
       throw new AppError("School ID is required", 400);
     }
 
-    if (!classes || !Array.isArray(classes) || classes.length === 0) {
-      throw new AppError("At least one class is required", 400);
+    if (classes !== undefined && !Array.isArray(classes)) {
+      throw new AppError("Classes must be an array", 400);
     }
 
-    // Validate classes
-    for (const item of classes) {
-      if (!item.classID) {
-        throw new AppError("Class ID is required", 400);
-      }
+    if (classes && classes.length > 0) {
+      for (const item of classes) {
+        if (!item.classID) {
+          throw new AppError("Class ID is required", 400);
+        }
 
-      if (
-        item.amount === undefined ||
-        item.amount === null ||
-        Number(item.amount) < 0
-      ) {
-        throw new AppError("Valid amount is required for every class", 400);
+        if (
+          item.amount !== undefined &&
+          item.amount !== null &&
+          Number(item.amount) < 0
+        ) {
+          throw new AppError("Amount cannot be negative", 400);
+        }
       }
     }
 
@@ -111,7 +164,7 @@ const schoolSettingController = {
       session,
       classes,
       schId,
-      userId
+      userId,
     });
 
     res.status(201).json({
@@ -121,7 +174,6 @@ const schoolSettingController = {
     });
   }),
 
-  // Get All Fee Plan Setups
   getAllFeePlanSetups: asyncHandler(async (req, res) => {
     const { schId } = req.query;
 
@@ -132,6 +184,94 @@ const schoolSettingController = {
       message: "Fee plan setups fetched successfully",
       count: feePlans.length,
       data: feePlans,
+    });
+  }),
+
+  createNewRegistration: asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const data = {
+      ...req.body,
+      Image: req.file ? req.file.filename : "",
+    };
+    const registration = await schoolSettingService.createNewRegistration(
+      userId,
+      data,
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "New Student registration successfully",
+      data: registration,
+    });
+  }),
+
+  feeheadsetup: asyncHandler(async (req, res) => {
+    const { headtype, session, feehead, schId } = req.body;
+    const userId = req.user._id;
+
+    if (!headtype || !session || !feehead) {
+      throw new AppError("headtype, session and feehead are required", 400);
+    }
+
+    
+
+    let result = await schoolSettingService.createfeeheadSetup({
+      headtype,
+      session,
+      feehead,
+      userId,
+      schId
+    });
+    res.status(201).json({
+      success: true,
+      message: "Fee head created successfully",
+      feeStructure: result,
+    });
+  }),
+
+  feeplantype: asyncHandler(async (req, res) => {
+    const { plan,schId  } = req.body;
+    const userId = req.user._id;
+
+    const result = await schoolSettingService.createfeeplantype({
+      plan,
+      userId,
+      schId
+    });
+    res.status(201).json({
+      success: true,
+      message: "Fee created successfully",
+      feeStructure: result,
+    });
+  }),
+
+  getFeeHeadSetup: asyncHandler(async (req, res) => {
+    const {schId} = req.body;
+    const feeHeads = await schoolSettingService.getFeeHeadSetup({schId});
+    res.status(200).json({
+      success: true,
+      message: "Fee heads fetched successfully",
+      feeHeads,
+    });
+  }),
+
+  getFeePlanType: asyncHandler(async (req, res) => {
+    const feePlans = await schoolSettingService.getFeePlanType();
+    res.status(200).json({
+      success: true,
+      message: "Fee plan types fetched successfully",
+      feePlans,
+    });
+  }),
+
+  getAllNewRegistration: asyncHandler(async (req, res) => {
+    const { schId } = req.body;
+    const getAllNewRegistration = await schoolSettingService.getAlNewReg(schId);
+    res.status(200).json({
+      success: true,
+      message: "All New Registration fetched successfully",
+      count: getAllNewRegistration.length,
+      data: getAllNewRegistration,
     });
   }),
 };

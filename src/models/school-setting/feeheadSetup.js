@@ -11,9 +11,14 @@ const feeheadsetup = new mongoose.Schema({
     required: true,
   },
   feehead:{
-    type:String,
+    type:[String],
     required:true
   },
+  schId: {
+       type: mongoose.Schema.Types.ObjectId,
+       ref: "School",
+       required: true,
+     },
   createdby:String
 },{
     timestamps:true

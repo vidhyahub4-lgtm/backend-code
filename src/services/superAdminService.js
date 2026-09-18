@@ -9,8 +9,7 @@ const Section = require("../models/super-admin/section");
 const School = require("../models/super-admin/schoolModels");
 const SchoolPayModeSetup = require("../models/super-admin/SchoolPayModeSetup");
 const SchoolCode = require("../models/super-admin/schoolCode");
-const feetype = require("../models/super-admin/feeplan");
-const feeheadtype = require("../models/super-admin/feeheadSetup");
+
 const Session = require("../models/dev_super/session");
 const LateFineSetup = require("../models/super-admin/lateFineSetup");
 
@@ -285,32 +284,8 @@ const superAdminService = {
     }
     return result;
   },
-  createfeeheadSetup: async ({ headtype, session, feehead, userId }) => {
-    const feeheads = new feeheadtype({
-      headtype,
-      session,
-      feehead,
-      createdby: userId,
-    });
 
-    return await feeheads.save();
-  },
 
-  createfeeplantype: async ({ plan, userId }) => {
-    const plantypes = new feetype({
-      plan,
-      createdby: userId,
-    });
-
-    return await plantypes.save();
-  },
-  getFeeHeadSetup: async () => {
-    return await feeheadtype.find().sort({ createdAt: -1 });
-  },
-
-  getFeePlanType: async () => {
-    return await feetype.find().sort({ createdAt: -1 });
-  },
 
   createSession: async ({ session }) => {
     const newSession = new Session({
