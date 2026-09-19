@@ -209,8 +209,8 @@ const schoolSettingController = {
     const { headtype, session, feehead, schId } = req.body;
     const userId = req.user._id;
 
-    if (!headtype || !session || !feehead) {
-      throw new AppError("headtype, session and feehead are required", 400);
+    if (!headtype || !session || !feehead || !schId) {
+      throw new AppError("headtype, session, feehead and schId are required", 400);
     }
 
     
@@ -231,6 +231,7 @@ const schoolSettingController = {
 
   feeplantype: asyncHandler(async (req, res) => {
     const { plan,schId  } = req.body;
+    if (!plan || !schId) throw new AppError("plan and schId are required", 400);
     const userId = req.user._id;
 
     const result = await schoolSettingService.createfeeplantype({
@@ -246,7 +247,7 @@ const schoolSettingController = {
   }),
 
   getFeeHeadSetup: asyncHandler(async (req, res) => {
-    const {schId} = req.body;
+    const {schId} = req.query;
     const feeHeads = await schoolSettingService.getFeeHeadSetup({schId});
     res.status(200).json({
       success: true,
@@ -256,7 +257,8 @@ const schoolSettingController = {
   }),
 
   getFeePlanType: asyncHandler(async (req, res) => {
-    const {schId} = req.body;
+    const {schId} = req.query;
+    if (!schId) throw new AppError("schId is required", 400);
     const feePlans = await schoolSettingService.getFeePlanType({schId});
     res.status(200).json({
       success: true,
@@ -266,7 +268,7 @@ const schoolSettingController = {
   }),
 
   getAllNewRegistration: asyncHandler(async (req, res) => {
-    const { schId } = req.body;
+    const { schId } = req.query;
     const getAllNewRegistration = await schoolSettingService.getAlNewReg(schId);
     res.status(200).json({
       success: true,
