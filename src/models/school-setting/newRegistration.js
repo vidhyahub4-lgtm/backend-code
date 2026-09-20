@@ -6,12 +6,13 @@ const newRegistrationSchema = new mongoose.Schema(
     regno: {
       type: Number,
       required: true,
+      min: 1,
     },
 
     session: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DevSuperSession",
       required: true,
-      trim: true,
     },
 
     schId: {
@@ -94,7 +95,7 @@ const newRegistrationSchema = new mongoose.Schema(
       trim: true,
     },
 
-    pen: {
+    penno: {
       type: String,
       trim: true,
     },
@@ -166,12 +167,14 @@ const newRegistrationSchema = new mongoose.Schema(
     Image: {
       type: String,
       default: "",
-     
     },
     createdby: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    dob: {
+      type: String,
     },
   },
   {
@@ -179,4 +182,20 @@ const newRegistrationSchema = new mongoose.Schema(
   },
 );
 
-module.exports = mongoose.model("NewStudentRegistration", newRegistrationSchema);
+// Prevent duplicate registration number
+// within the same school + session.
+newRegistrationSchema.index(
+  {
+    schId: 1,
+    session: 1,
+    regno: 1,
+  },
+  {
+    unique: true,
+  },
+);
+
+module.exports = mongoose.model(
+  "NewStudentRegistration",
+  newRegistrationSchema,
+);

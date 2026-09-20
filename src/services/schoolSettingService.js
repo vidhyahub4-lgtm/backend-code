@@ -5,6 +5,60 @@ const NewStudentRegistration = require("../models/school-setting/newRegistration
 const AppError = require("../utils/appError");
 const feetype = require("../models/school-setting/feeplan");
 const feeheadtype = require("../models/school-setting/feeheadSetup");
+const mongoose = require('mongoose')
+const RegistrationCounter = require('../models/school-setting/registrationCounterSchema')
+
+const getNextRegistrationNumber = async (
+  schId,
+  session,
+  mongoSession
+) => {
+  try {
+    const counter = await RegistrationCounter.findOneAndUpdate(
+      {
+        schId,
+        session,
+      },
+      {
+        $inc: {
+          seq: 1,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+        session: mongoSession,
+      }
+    );
+
+    return counter.seq;
+
+  } catch (error) {
+    if (error.code === 11000) {
+      const counter = await RegistrationCounter.findOneAndUpdate(
+        {
+          schId,
+          session,
+        },
+        {
+          $inc: {
+            seq: 1,
+          },
+        },
+        {
+          new: true,
+          session: mongoSession,
+        }
+      );
+
+      return counter.seq;
+    }
+
+    throw error;
+  }
+};
+
 const schoolSettingService = {
   createSchClass: async ({ schoolID, schCode, sectionID, classID, userId }) => {
     // Check if this class already exists
@@ -254,85 +308,188 @@ const schoolSettingService = {
     return feePlans;
   },
 
+  // createNewRegistration: async (userId, data) => {
+  //   const {
+  //     regno,
+  //     session,
+  //     schId,
+  //     schCode,
+  //     sname,
+  //     fname,
+  //     mname,
+  //     gname,
+  //     gender,
+  //     category,
+  //     age,
+  //     mothertongue,
+  //     secLang,
+  //     nationality,
+  //     religion,
+  //     adharId,
+  //     pen,
+  //     mob1,
+  //     mob2,
+  //     email,
+  //     whatAppno,
+  //     lclass,
+  //     lper,
+  //     lsch,
+  //     lboard,
+  //     classApplyfor,
+  //     registrationdate,
+  //     Image,
+  //   } = data;
+
+  //   // Check duplicate registration number for same school/session
+  //   const existingRegistration = await NewStudentRegistration.findOne({
+  //     regno,
+  //     session,
+  //     schId,
+  //   });
+
+  //   if (existingRegistration) {
+  //     throw new Error(
+  //       "Registration number already exists for this school and session",
+  //     );
+  //   }
+
+  //   const newRegistration = await NewStudentRegistration.create({
+  //     regno,
+  //     session,
+  //     schId,
+  //     schCode,
+  //     sname,
+  //     fname,
+  //     mname,
+  //     gname,
+  //     gender,
+  //     category,
+  //     age,
+  //     mothertongue,
+  //     secLang,
+  //     nationality,
+  //     religion,
+  //     adharId,
+  //     pen,
+  //     mob1,
+  //     mob2,
+  //     email,
+  //     whatAppno,
+  //     lclass,
+  //     lper,
+  //     lsch,
+  //     lboard,
+  //     classApplyfor,
+  //     registrationdate,
+  //     Image,
+  //     createdby: userId,
+  //   });
+
+  //   return newRegistration;
+  // },
+
+
   createNewRegistration: async (userId, data) => {
-    const {
-      regno,
-      session,
-      schId,
-      schCode,
-      sname,
-      fname,
-      mname,
-      gname,
-      gender,
-      category,
-      age,
-      mothertongue,
-      secLang,
-      nationality,
-      religion,
-      adharId,
-      pen,
-      mob1,
-      mob2,
-      email,
-      whatAppno,
-      lclass,
-      lper,
-      lsch,
-      lboard,
-      classApplyfor,
-      registrationdate,
-      Image,
-    } = data;
+  const {
+    session,
+    schId,
+    schCode,
+    sname,
+    fname,
+    mname,
+    gname,
+    gender,
+    category,
+    age,
+    mothertongue,
+    secLang,
+    nationality,
+    religion,
+    adharId,
+    penno,
+    mob1,
+    mob2,
+    email,
+    whatAppno,
+    lclass,
+    lper,
+    lsch,
+    lboard,
+    classApplyfor,
+    registrationdate,
+    Image,
+    dob
+  } = data;
 
-    // Check duplicate registration number for same school/session
-    const existingRegistration = await NewStudentRegistration.findOne({
-      regno,
-      session,
-      schId,
-    });
+  // Start MongoDB session
+  const mongoSession = await mongoose.startSession();
 
-    if (existingRegistration) {
-      throw new Error(
-        "Registration number already exists for this school and session",
+  try {
+    let newRegistration;
+
+    // Start transaction
+    await mongoSession.withTransaction(async () => {
+
+      // Generate next registration number
+      const regno = await getNextRegistrationNumber(
+        schId,
+        session,
+        mongoSession
       );
-    }
 
-    const newRegistration = await NewStudentRegistration.create({
-      regno,
-      session,
-      schId,
-      schCode,
-      sname,
-      fname,
-      mname,
-      gname,
-      gender,
-      category,
-      age,
-      mothertongue,
-      secLang,
-      nationality,
-      religion,
-      adharId,
-      pen,
-      mob1,
-      mob2,
-      email,
-      whatAppno,
-      lclass,
-      lper,
-      lsch,
-      lboard,
-      classApplyfor,
-      registrationdate,
-      Image,
-      createdby: userId,
+      // Create student registration
+      const registrations = await NewStudentRegistration.create(
+        [
+          {
+            regno,
+            session,
+            schId,
+            schCode,
+            sname,
+            fname,
+            mname,
+            gname,
+            gender,
+            category,
+            age,
+            mothertongue,
+            secLang,
+            nationality,
+            religion,
+            adharId,
+            penno,
+            mob1,
+            mob2,
+            email,
+            whatAppno,
+            lclass,
+            lper,
+            lsch,
+            lboard,
+            classApplyfor,
+            registrationdate,
+            Image,
+            createdby: userId,
+            dob
+          },
+        ],
+        {
+          session: mongoSession,
+        }
+      );
+
+      newRegistration = registrations[0];
     });
 
     return newRegistration;
-  },
+
+  } catch (error) {
+    throw error;
+
+  } finally {
+    await mongoSession.endSession();
+  }
+},
 
   getAlNewReg: async (schId) => {
     const newStudentReg = await NewStudentRegistration.find({ schId });

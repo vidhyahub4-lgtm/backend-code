@@ -95,11 +95,11 @@ const schoolSchema = new mongoose.Schema(
       ref: "User",
       reqired:true
     },
-    session:{
+    session:[{
        type: mongoose.Schema.Types.ObjectId,
       ref: "DevSuperSession",
       reqired:true
-    }
+    }]
   },
   {
     timestamps: true,

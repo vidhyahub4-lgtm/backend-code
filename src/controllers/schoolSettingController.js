@@ -1,6 +1,8 @@
 const asyncHandler = require("../errorHandlers/asyncHandler");
 const AppError = require("../utils/appError");
 const schoolSettingService = require("../services/schoolSettingService");
+
+
 const schoolSettingController = {
   createSchClass: asyncHandler(async (req, res) => {
     const { schoolID, schCode, sectionID, classID } = req.body;
@@ -186,6 +188,8 @@ const schoolSettingController = {
       data: feePlans,
     });
   }),
+
+
 
   createNewRegistration: asyncHandler(async (req, res) => {
     const userId = req.user._id;
