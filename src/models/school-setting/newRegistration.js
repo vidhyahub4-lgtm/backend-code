@@ -154,8 +154,13 @@ const newRegistrationSchema = new mongoose.Schema(
 
     // Admission Details
     classApplyfor: {
-      type: String,
-      trim: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      required: true,
+    },
+    admdate:{
+      type:Date,
+      default:null
     },
 
     registrationdate: {
