@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const feeheadsetup = new mongoose.Schema({
   headtype: {
     type: String,
-    enum: ["admisssion", "promotion", "monthly", "Misc", "special ocassion"],
+    enum: ["admission", "promotion", "monthly", "Misc", "special ocassion"],
     required: true,
   },
   session: {

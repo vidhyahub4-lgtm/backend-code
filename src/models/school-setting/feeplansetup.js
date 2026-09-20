@@ -1,3 +1,5 @@
+// 
+
 const mongoose = require("mongoose");
 
 const feePlanSetupSchema = new mongoose.Schema(
@@ -22,12 +24,16 @@ const feePlanSetupSchema = new mongoose.Schema(
           required: true,
         },
 
-        amount: {
-          type: Number,
-          required: true,
-          min: 0,
-          default:0
-        },
+        // one entry per fee head, e.g. "admission", "smart erp"
+        heads: [
+          {
+            name: { type: String, required: true, trim: true },
+            amount: { type: Number, required: true, min: 0, default: 0 },
+          },
+        ],
+
+        // the "Total" row in the grid
+        total: { type: Number, min: 0, default: 0 },
       },
     ],
 
@@ -42,11 +48,10 @@ const feePlanSetupSchema = new mongoose.Schema(
       required: true,
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
-const FeePlanSetup = mongoose.model("FeePlanSetup", feePlanSetupSchema);
+// one plan per school + session + head type
+feePlanSetupSchema.index({ headType: 1, session: 1, schId: 1 }, { unique: true });
 
-module.exports = FeePlanSetup;
+module.exports = mongoose.model("FeePlanSetup", feePlanSetupSchema);

@@ -73,56 +73,6 @@ const schoolSettingController = {
     });
   }),
 
-  // createFeePlanSetup: asyncHandler(async (req, res) => {
-  //   const { headType, session, classes, schId } = req.body;
-  //   const userId = req.user._id;
-  //   // Validation
-  //   if (!headType) {
-  //     throw new AppError("Head type is required", 400);
-  //   }
-
-  //   if (!session) {
-  //     throw new AppError("Session is required", 400);
-  //   }
-
-  //   if (!schId) {
-  //     throw new AppError("School ID is required", 400);
-  //   }
-
-  //   if (!classes || !Array.isArray(classes) || classes.length === 0) {
-  //     throw new AppError("At least one class is required", 400);
-  //   }
-
-  //   // Validate classes
-  //   for (const item of classes) {
-  //     if (!item.classID) {
-  //       throw new AppError("Class ID is required", 400);
-  //     }
-
-  //     if (
-  //       item.amount === undefined ||
-  //       item.amount === null ||
-  //       Number(item.amount) < 0
-  //     ) {
-  //       throw new AppError("Valid amount is required for every class", 400);
-  //     }
-  //   }
-
-  //   const feePlan = await schoolSettingService.createFeePlanSetup({
-  //     headType,
-  //     session,
-  //     classes,
-  //     schId,
-  //     userId,
-  //   });
-
-  //   res.status(201).json({
-  //     success: true,
-  //     message: "Fee plan setup created successfully",
-  //     data: feePlan,
-  //   });
-  // }),
-
   // Get All Fee Plan Setups
   createFeePlanSetup: asyncHandler(async (req, res) => {
     const { headType, session, schId, classes } = req.body;
@@ -141,25 +91,25 @@ const schoolSettingController = {
       throw new AppError("School ID is required", 400);
     }
 
-    if (classes !== undefined && !Array.isArray(classes)) {
-      throw new AppError("Classes must be an array", 400);
-    }
+    // if (classes !== undefined && !Array.isArray(classes)) {
+    //   throw new AppError("Classes must be an array", 400);
+    // }
 
-    if (classes && classes.length > 0) {
-      for (const item of classes) {
-        if (!item.classID) {
-          throw new AppError("Class ID is required", 400);
-        }
+    // if (classes && classes.length > 0) {
+    //   for (const item of classes) {
+    //     if (!item.classID) {
+    //       throw new AppError("Class ID is required", 400);
+    //     }
 
-        if (
-          item.amount !== undefined &&
-          item.amount !== null &&
-          Number(item.amount) < 0
-        ) {
-          throw new AppError("Amount cannot be negative", 400);
-        }
-      }
-    }
+    //     if (
+    //       item.amount !== undefined &&
+    //       item.amount !== null &&
+    //       Number(item.amount) < 0
+    //     ) {
+    //       throw new AppError("Amount cannot be negative", 400);
+    //     }
+    //   }
+    // }
 
     const feePlan = await schoolSettingService.createFeePlanSetup({
       headType,
@@ -226,6 +176,8 @@ const schoolSettingController = {
       userId,
       schId
     });
+
+    
     res.status(201).json({
       success: true,
       message: "Fee head created successfully",
@@ -252,7 +204,13 @@ const schoolSettingController = {
 
   getFeeHeadSetup: asyncHandler(async (req, res) => {
     const {schId} = req.query;
+     if ( !schId) {
+      throw new AppError(" schId is required", 400);
+    }
+
     const feeHeads = await schoolSettingService.getFeeHeadSetup({schId});
+
+    
     res.status(200).json({
       success: true,
       message: "Fee heads fetched successfully",
