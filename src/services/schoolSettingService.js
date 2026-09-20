@@ -55,6 +55,16 @@ const getNextRegistrationNumber = async (schId, session, mongoSession) => {
   }
 };
 
+// move this out of createFeePlanSetup so both functions share it
+const populateFeePlan = async (feePlanId) => {
+  const populated = await FeePlanSetup.findById(feePlanId)
+    .populate("session")
+    .populate("classes.classID")
+    .lean();
+  if (!populated) throw new AppError("Fee plan not found", 404);
+  return populated;
+};
+
 const schoolSettingService = {
   createSchClass: async ({ schoolID, schCode, sectionID, classID, userId }) => {
     // Check if this class already exists
@@ -363,6 +373,57 @@ const schoolSettingService = {
       .sort({ createdAt: -1 });
 
     return feePlans;
+  },
+
+  updateFeePlanSetup: async ({ planId, headType, schId, classes }) => {
+    if (!Array.isArray(classes) || !classes.length) {
+      throw new AppError("classes array is required", 400);
+    }
+
+    const feePlan = await FeePlanSetup.findOne({
+      _id: planId,
+      schId,
+      headType,
+    });
+    if (!feePlan) {
+      throw new AppError(`Fee plan not found for head type "${headType}"`, 404);
+    }
+
+    for (const item of classes) {
+      const planClass = feePlan.classes.find(
+        (c) => c.classID.toString() === String(item.classID),
+      );
+      if (!planClass) {
+        throw new AppError(
+          `Class ${item.classID} is not part of this fee plan`,
+          404,
+        );
+      }
+
+      for (const h of item.heads || []) {
+        const feetype = h.feetype?.trim();
+        const amount = Number(h.amount);
+
+        if (!feetype || !Number.isFinite(amount) || amount < 0) {
+          throw new AppError(`Invalid amount for fee head "${h.feetype}"`, 400);
+        }
+
+        const planHead = planClass.heads.find((x) => x.feetype === feetype);
+        if (!planHead) {
+          throw new AppError(
+            `Fee head "${feetype}" not found in this plan`,
+            404,
+          );
+        }
+
+        planHead.amount = amount;
+      }
+
+      planClass.total = planClass.heads.reduce((sum, h) => sum + h.amount, 0);
+    }
+
+    await feePlan.save();
+    return await populateFeePlan(feePlan._id);
   },
 
   // createNewRegistration: async (userId, data) => {

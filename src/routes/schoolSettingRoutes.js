@@ -14,6 +14,7 @@ router.get('/get-sch-house',authMiddleware, schoolSettingController.getSchHouse 
 router.post('/create-feeplansetup',authMiddleware, schoolSettingController.createFeePlanSetup  )
 router.get('/get-feeplansetup', authMiddleware, schoolSettingController.getAllFeePlanSetups)
 
+router.patch("/feeplansetup/:planId", authMiddleware, schoolSettingController.updateFeePlanSetup);
 
 router.post('/fee-head-setup',authMiddleware, schoolSettingController.feeheadsetup )
 router.get('/get-fee-head-setup', authMiddleware, schoolSettingController.getFeeHeadSetup);
