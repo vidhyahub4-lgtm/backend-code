@@ -2,16 +2,17 @@ const mongoose = require("mongoose");
 
 const schHouseSchema = new mongoose.Schema(
   {
-    house: {
+    house: [{
       type: String,
       required: true,
       unique: true,
       trim: true,
-    },
+    }],
     schId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
       required: true,
+      unique:true
     },
 
     createdby: {

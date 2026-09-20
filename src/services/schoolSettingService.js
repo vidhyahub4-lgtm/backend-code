@@ -5,14 +5,10 @@ const NewStudentRegistration = require("../models/school-setting/newRegistration
 const AppError = require("../utils/appError");
 const feetype = require("../models/school-setting/feeplan");
 const feeheadtype = require("../models/school-setting/feeheadSetup");
-const mongoose = require('mongoose')
-const RegistrationCounter = require('../models/school-setting/registrationCounterSchema')
+const mongoose = require("mongoose");
+const RegistrationCounter = require("../models/school-setting/registrationCounterSchema");
 
-const getNextRegistrationNumber = async (
-  schId,
-  session,
-  mongoSession
-) => {
+const getNextRegistrationNumber = async (schId, session, mongoSession) => {
   try {
     const counter = await RegistrationCounter.findOneAndUpdate(
       {
@@ -29,11 +25,10 @@ const getNextRegistrationNumber = async (
         upsert: true,
         setDefaultsOnInsert: true,
         session: mongoSession,
-      }
+      },
     );
 
     return counter.seq;
-
   } catch (error) {
     if (error.code === 11000) {
       const counter = await RegistrationCounter.findOneAndUpdate(
@@ -49,7 +44,7 @@ const getNextRegistrationNumber = async (
         {
           new: true,
           session: mongoSession,
-        }
+        },
       );
 
       return counter.seq;
@@ -119,14 +114,47 @@ const schoolSettingService = {
       .sort({ createdAt: -1 });
   },
 
-  createSchHouse: async ({ house, schId, userId }) => {
-    const schHouse = new SchHouse({
-      house,
-      schId,
-      createdby: userId,
-    });
+  // createSchHouse: async ({ house, schId, userId }) => {
+  //   const schHouse = new SchHouse({
+  //     house,
+  //     schId,
+  //     createdby: userId,
+  //   });
 
-    return await schHouse.save();
+  //   return await schHouse.save();
+  // },
+  createSchHouse: async ({ house, schId, userId }) => {
+    const houses = Array.isArray(house) ? house : [house];
+
+    const cleanedHouses = houses.map((item) => item.trim()).filter(Boolean);
+
+    if (!cleanedHouses.length) {
+      throw new Error("At least one house is required");
+    }
+
+    const schHouse = await SchHouse.findOneAndUpdate(
+      { schId },
+
+      {
+        $addToSet: {
+          house: {
+            $each: cleanedHouses,
+          },
+        },
+
+        $setOnInsert: {
+          createdby: userId,
+        },
+      },
+
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+      },
+    );
+
+    return schHouse;
   },
 
   getSchHouse: async () => {
@@ -388,108 +416,104 @@ const schoolSettingService = {
   //   return newRegistration;
   // },
 
-
   createNewRegistration: async (userId, data) => {
-  const {
-    session,
-    schId,
-    schCode,
-    sname,
-    fname,
-    mname,
-    gname,
-    gender,
-    category,
-    age,
-    mothertongue,
-    secLang,
-    nationality,
-    religion,
-    adharId,
-    penno,
-    mob1,
-    mob2,
-    email,
-    whatAppno,
-    lclass,
-    lper,
-    lsch,
-    lboard,
-    classApplyfor,
-    registrationdate,
-    Image,
-    dob
-  } = data;
+    const {
+      session,
+      schId,
+      schCode,
+      sname,
+      fname,
+      mname,
+      gname,
+      gender,
+      category,
+      age,
+      mothertongue,
+      secLang,
+      nationality,
+      religion,
+      adharId,
+      penno,
+      mob1,
+      mob2,
+      email,
+      whatAppno,
+      lclass,
+      lper,
+      lsch,
+      lboard,
+      classApplyfor,
+      registrationdate,
+      Image,
+      dob,
+    } = data;
 
-  // Start MongoDB session
-  const mongoSession = await mongoose.startSession();
+    // Start MongoDB session
+    const mongoSession = await mongoose.startSession();
 
-  try {
-    let newRegistration;
+    try {
+      let newRegistration;
 
-    // Start transaction
-    await mongoSession.withTransaction(async () => {
+      // Start transaction
+      await mongoSession.withTransaction(async () => {
+        // Generate next registration number
+        const regno = await getNextRegistrationNumber(
+          schId,
+          session,
+          mongoSession,
+        );
 
-      // Generate next registration number
-      const regno = await getNextRegistrationNumber(
-        schId,
-        session,
-        mongoSession
-      );
-
-      // Create student registration
-      const registrations = await NewStudentRegistration.create(
-        [
+        // Create student registration
+        const registrations = await NewStudentRegistration.create(
+          [
+            {
+              regno,
+              session,
+              schId,
+              schCode,
+              sname,
+              fname,
+              mname,
+              gname,
+              gender,
+              category,
+              age,
+              mothertongue,
+              secLang,
+              nationality,
+              religion,
+              adharId,
+              penno,
+              mob1,
+              mob2,
+              email,
+              whatAppno,
+              lclass,
+              lper,
+              lsch,
+              lboard,
+              classApplyfor,
+              registrationdate,
+              Image,
+              createdby: userId,
+              dob,
+            },
+          ],
           {
-            regno,
-            session,
-            schId,
-            schCode,
-            sname,
-            fname,
-            mname,
-            gname,
-            gender,
-            category,
-            age,
-            mothertongue,
-            secLang,
-            nationality,
-            religion,
-            adharId,
-            penno,
-            mob1,
-            mob2,
-            email,
-            whatAppno,
-            lclass,
-            lper,
-            lsch,
-            lboard,
-            classApplyfor,
-            registrationdate,
-            Image,
-            createdby: userId,
-            dob
+            session: mongoSession,
           },
-        ],
-        {
-          session: mongoSession,
-        }
-      );
+        );
 
-      newRegistration = registrations[0];
-    });
+        newRegistration = registrations[0];
+      });
 
-    return newRegistration;
-
-  } catch (error) {
-    throw error;
-
-  } finally {
-    await mongoSession.endSession();
-  }
-},
+      return newRegistration;
+    } catch (error) {
+      throw error;
+    } finally {
+      await mongoSession.endSession();
+    }
+  },
 
   getAlNewReg: async (schId) => {
     const newStudentReg = await NewStudentRegistration.find({ schId });
@@ -563,8 +587,8 @@ const schoolSettingService = {
     return await feeheadtype.find({ schId }).sort({ createdAt: -1 });
   },
 
-  getFeePlanType: async ({schId}) => {
-    return await feetype.find({schId}).sort({ createdAt: -1 });
+  getFeePlanType: async ({ schId }) => {
+    return await feetype.find({ schId }).sort({ createdAt: -1 });
   },
 };
 
