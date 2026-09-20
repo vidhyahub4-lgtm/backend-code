@@ -7,7 +7,7 @@ const feetype = require("../models/school-setting/feeplan");
 const feeheadtype = require("../models/school-setting/feeheadSetup");
 const mongoose = require("mongoose");
 const RegistrationCounter = require("../models/school-setting/registrationCounterSchema");
-const DevSuperSession = require('../models/dev_super/session')
+const DevSuperSession = require("../models/dev_super/session");
 
 const getNextRegistrationNumber = async (schId, session, mongoSession) => {
   try {
@@ -184,151 +184,161 @@ const schoolSettingService = {
 
   //   return feePlan;
   // },
- createFeePlanSetup: async (data) => {
-  const { headType, session, classes, schId, userId } = data;
 
-  // ---------- 1. All classes of the school ----------
-  const schoolClasses = await SchClass.find({ schoolID: schId })
-    .populate("classID")
-    .populate("sectionID")
-    .lean();
+  createFeePlanSetup: async (data) => {
+    const { headType, session, classes, schId, userId } = data;
 
-  if (!schoolClasses.length) {
-    throw new AppError("No classes found for this school", 404);
-  }
-
-  const classMap = new Map();
-  schoolClasses.forEach((schClass) => {
-    if (!schClass.classID) return;
-    const classId = schClass.classID._id.toString();
-    if (!classMap.has(classId)) {
-      classMap.set(classId, { classID: schClass.classID._id, schClasses: [] });
-    }
-    classMap.get(classId).schClasses.push(schClass);
-  });
-
-  // ---------- 2. Fee heads configured for this school/session/headtype ----------
-  // feeheadtype.session is a String like "2026-27", but FeePlanSetup.session
-  // looks like an ObjectId ref, so resolve the name first (adjust model/field).
-  const sessionDoc = await DevSuperSession.findById(session).lean();
-  const sessionName = sessionDoc?.session ?? session;
-  console.log(headType, sessionName, schId )
-  const feeHeadSetup = await feeheadtype.findOne({
-    headtype: headType, // note: field is "headtype" in this model
-    session: sessionName,
-    schId,
-  }).lean();
-  console.log('feeHeadSetup : ',feeHeadSetup)
-
-  if (!feeHeadSetup?.feehead?.length) {
-    throw new AppError(
-      `No fee heads configured for ${headType} (${sessionName})`,
-      404,
-    );
-  }
-
-  const feeHeads = [
-    ...new Set(feeHeadSetup.feehead.map((h) => h.trim()).filter(Boolean)),
-  ];
-
-  // ---------- 3. Amounts supplied by frontend ----------
-  // expected: classes = [{ classID, heads: [{ name, amount }] }]
-  const providedAmounts = new Map(); // classId -> Map(headName -> amount)
-  if (Array.isArray(classes)) {
-    classes.forEach((item) => {
-      if (!item.classID) return;
-      const headMap = new Map();
-      (item.heads || []).forEach((h) => {
-        if (h?.name) headMap.set(h.name.trim(), Number(h.amount) || 0);
-      });
-      providedAmounts.set(item.classID.toString(), headMap);
-    });
-  }
-
-  const getAmount = (classId, headName) =>
-    providedAmounts.get(classId)?.get(headName) ?? 0;
-
-  const sumHeads = (heads) =>
-    heads.reduce((sum, h) => sum + (Number(h.amount) || 0), 0);
-
-  // ---------- 4. Populate helper ----------
-  const populateFeePlan = async (feePlanId) => {
-    const populated = await FeePlanSetup.findById(feePlanId)
-      .populate("session")
-      .populate("classes.classID")
+    // ---------- 1. All classes of the school ----------
+    const schoolClasses = await SchClass.find({ schoolID: schId })
+      .populate("classID")
+      .populate("sectionID")
       .lean();
-    if (!populated) throw new AppError("Fee plan not found", 404);
-    return populated;
-  };
 
-  // ---------- 5. Existing plan: sync missing classes / heads ----------
-  const existingFeePlan = await FeePlanSetup.findOne({ headType, session, schId });
+    if (!schoolClasses.length) {
+      throw new AppError("No classes found for this school", 404);
+    }
 
-  if (existingFeePlan) {
-    let changed = false;
-
-    const planClassMap = new Map(
-      existingFeePlan.classes.map((c) => [c.classID.toString(), c]),
-    );
-
-    for (const [classId, item] of classMap) {
-      const planClass = planClassMap.get(classId);
-
-      // (a) class added to the school after the plan was created
-      if (!planClass) {
-        const heads = feeHeads.map((name) => ({
-          name,
-          amount: getAmount(classId, name),
-        }));
-        existingFeePlan.classes.push({
-          classID: item.classID,
-          heads,
-          total: sumHeads(heads),
+    const classMap = new Map();
+    schoolClasses.forEach((schClass) => {
+      if (!schClass.classID) return;
+      const classId = schClass.classID._id.toString();
+      if (!classMap.has(classId)) {
+        classMap.set(classId, {
+          classID: schClass.classID._id,
+          schClasses: [],
         });
-        changed = true;
-        continue;
+      }
+      classMap.get(classId).schClasses.push(schClass);
+    });
+
+    // ---------- 2. Fee heads configured for this school/session/headtype ----------
+    const sessionDoc = await DevSuperSession.findById(session).lean();
+    const sessionName = sessionDoc?.session ?? session;
+
+    const feeHeadSetup = await feeheadtype
+      .findOne({
+        headtype: headType,
+        session: sessionName,
+        schId,
+      })
+      .lean();
+
+    if (!feeHeadSetup?.feehead?.length) {
+      throw new AppError(
+        `No fee heads configured for ${headType} (${sessionName})`,
+        404,
+      );
+    }
+
+    const feeHeads = [
+      ...new Set(feeHeadSetup.feehead.map((h) => h.trim()).filter(Boolean)),
+    ];
+
+    // ---------- 3. Amounts supplied by frontend ----------
+    // expected: classes = [{ classID, heads: [{ feetype, amount }] }]
+    const providedAmounts = new Map(); // classId -> Map(feetype -> amount)
+    if (Array.isArray(classes)) {
+      classes.forEach((item) => {
+        if (!item.classID) return;
+        const headMap = new Map();
+        (item.heads || []).forEach((h) => {
+          if (h?.feetype) headMap.set(h.feetype.trim(), Number(h.amount) || 0);
+        });
+        providedAmounts.set(item.classID.toString(), headMap);
+      });
+    }
+
+    const getAmount = (classId, feetype) =>
+      providedAmounts.get(classId)?.get(feetype) ?? 0;
+
+    const sumHeads = (heads) =>
+      heads.reduce((sum, h) => sum + (Number(h.amount) || 0), 0);
+
+    // ---------- 4. Populate helper ----------
+    const populateFeePlan = async (feePlanId) => {
+      const populated = await FeePlanSetup.findById(feePlanId)
+        .populate("session")
+        .populate("classes.classID")
+        .lean();
+      if (!populated) throw new AppError("Fee plan not found", 404);
+      return populated;
+    };
+
+    // ---------- 5. Existing plan: sync missing classes / heads ----------
+    const existingFeePlan = await FeePlanSetup.findOne({
+      headType,
+      session,
+      schId,
+    });
+
+    if (existingFeePlan) {
+      let changed = false;
+
+      const planClassMap = new Map(
+        existingFeePlan.classes.map((c) => [c.classID.toString(), c]),
+      );
+
+      for (const [classId, item] of classMap) {
+        const planClass = planClassMap.get(classId);
+
+        // (a) class added to the school after the plan was created
+        if (!planClass) {
+          const heads = feeHeads.map((feetype) => ({
+            feetype,
+            amount: getAmount(classId, feetype),
+          }));
+          existingFeePlan.classes.push({
+            classID: item.classID,
+            heads,
+            total: sumHeads(heads),
+          });
+          changed = true;
+          continue;
+        }
+
+        // (b) fee head added later to feeheadtype (e.g. "smart erp")
+        const haveHeads = new Set(planClass.heads.map((h) => h.feetype));
+        feeHeads.forEach((feetype) => {
+          if (!haveHeads.has(feetype)) {
+            planClass.heads.push({
+              feetype,
+              amount: getAmount(classId, feetype),
+            });
+            changed = true;
+          }
+        });
       }
 
-      // (b) fee head added later to feeheadtype (e.g. "smart erp")
-      const haveHeads = new Set(planClass.heads.map((h) => h.name));
-      feeHeads.forEach((name) => {
-        if (!haveHeads.has(name)) {
-          planClass.heads.push({ name, amount: getAmount(classId, name) });
-          changed = true;
-        }
-      });
+      if (changed) {
+        existingFeePlan.classes.forEach((c) => {
+          c.total = sumHeads(c.heads);
+        });
+        await existingFeePlan.save();
+      }
+
+      return await populateFeePlan(existingFeePlan._id);
     }
 
-    if (changed) {
-      existingFeePlan.classes.forEach((c) => {
-        c.total = sumHeads(c.heads);
-      });
-      await existingFeePlan.save();
-    }
+    // ---------- 6. New plan: every class x every fee head ----------
+    const feePlanClasses = Array.from(classMap.values()).map((item) => {
+      const classId = item.classID.toString();
+      const heads = feeHeads.map((feetype) => ({
+        feetype,
+        amount: getAmount(classId, feetype),
+      }));
+      return { classID: item.classID, heads, total: sumHeads(heads) };
+    });
 
-    return await populateFeePlan(existingFeePlan._id);
-  }
+    const feePlan = await FeePlanSetup.create({
+      headType,
+      session,
+      classes: feePlanClasses,
+      schId,
+      createdby: userId,
+    });
 
-  // ---------- 6. New plan: every class x every fee head ----------
-  const feePlanClasses = Array.from(classMap.values()).map((item) => {
-    const classId = item.classID.toString();
-    const heads = feeHeads.map((name) => ({
-      name,
-      amount: getAmount(classId, name),
-    }));
-    return { classID: item.classID, heads, total: sumHeads(heads) };
-  });
-
-  const feePlan = await FeePlanSetup.create({
-    headType,
-    session,
-    classes: feePlanClasses,
-    schId,
-    createdby: userId,
-  });
-
-  return await populateFeePlan(feePlan._id);
-},
+    return await populateFeePlan(feePlan._id);
+  },
 
   getAllFeePlanSetups: async (schId) => {
     const filter = {};

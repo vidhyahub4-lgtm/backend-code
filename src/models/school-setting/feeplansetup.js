@@ -27,7 +27,7 @@ const feePlanSetupSchema = new mongoose.Schema(
         // one entry per fee head, e.g. "admission", "smart erp"
         heads: [
           {
-            name: { type: String, required: true, trim: true },
+            feetype: { type: String, required: true, trim: true },
             amount: { type: Number, required: true, min: 0, default: 0 },
           },
         ],
