@@ -26,6 +26,7 @@ app.use('/health', (req, res) => {
 app.use('/super-admin', require('./routes/superAdminRoutes'));
 app.use('/user', require('./routes/userRoutes') )
 app.use('/school-settings', require('./routes/schoolSettingRoutes') )
+app.use("/api/fees", require("./routes/feeCollectionRoutes"));
 
 
 

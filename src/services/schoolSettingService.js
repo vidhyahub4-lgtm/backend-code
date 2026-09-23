@@ -8,6 +8,9 @@ const feeheadtype = require("../models/school-setting/feeheadSetup");
 const mongoose = require("mongoose");
 const RegistrationCounter = require("../models/school-setting/registrationCounterSchema");
 const DevSuperSession = require("../models/dev_super/session");
+const feeService = require('./feeService')
+const StudentAdmission = require('../models/school-setting/Studentadmission')
+const StudentEnrollment = require('../models/school-setting/Studentenrollment');
 
 const getNextRegistrationNumber = async (schId, session, mongoSession) => {
   try {
@@ -679,6 +682,111 @@ const schoolSettingService = {
 
   getFeePlanType: async ({ schId }) => {
     return await feetype.find({ schId }).sort({ createdAt: -1 });
+  },
+
+  /*
+   * Admit a student:
+   *   1. StudentAdmission   (permanent record)
+   *   2. StudentEnrollment  (class / section / roll for this session)
+   *   3. FeeDemand rows     (admission fee heads from the fee plan)
+   * All three succeed together or none are saved.
+   */
+  admitStudent: async ({
+    schId,
+    userId,
+    regno,
+    admno,
+    session,
+    classID,
+    sectionId,
+    rollNo,
+    admissionDate,
+  }) => {
+    // the class + section must exist for THIS school
+    const validClass = await SchClass.exists({
+      schoolID: schId,
+      classID,
+      sectionID: sectionId,
+    });
+    if (!validClass) {
+      throw new AppError("Class / section not found for this school", 404);
+    }
+
+    const dbSession = await mongoose.startSession();
+    let result;
+
+    try {
+      await dbSession.withTransaction(async () => {
+        const [student] = await StudentAdmission.create(
+          [
+            {
+              schId,
+              admno,
+              regno,
+              admissionSession: session,
+              admissionDate: admissionDate || new Date(),
+              createdby: userId,
+            },
+          ],
+          { session: dbSession },
+        );
+
+        const [enrollment] = await StudentEnrollment.create(
+          [
+            {
+              schId,
+              session,
+              studentId: student._id,
+              classID,
+              sectionId,
+              rollNo,
+              createdby: userId,
+            },
+          ],
+          { session: dbSession },
+        );
+
+        const demandsCreated = await feeService.generateAdmissionDemands({
+          schId,
+          session,
+          studentId: student._id,
+          classID,
+          userId,
+          dbSession,
+        });
+
+        result = { student, enrollment, demandsCreated };
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        throw new AppError(
+          "Admission no, registration or roll no already exists",
+          409,
+        );
+      }
+      throw err;
+    } finally {
+      await dbSession.endSession();
+    }
+
+    return result;
+  },
+
+    /*
+   * Class-wise student list for a session.
+   */
+  listEnrollments: async ({ schId, session, classID, sectionId }) => {
+    return await StudentEnrollment.find({
+      schId,
+      session,
+      ...(classID ? { classID } : {}),
+      ...(sectionId ? { sectionId } : {}),
+    })
+      .populate({ path: "studentId", populate: { path: "regno" } })
+      .populate("classID")
+      .populate("sectionId")
+      .sort({ rollNo: 1 })
+      .lean();
   },
 };
 

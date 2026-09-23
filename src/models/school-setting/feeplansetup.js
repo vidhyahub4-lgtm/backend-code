@@ -54,4 +54,6 @@ const feePlanSetupSchema = new mongoose.Schema(
 // one plan per school + session + head type
 feePlanSetupSchema.index({ headType: 1, session: 1, schId: 1 }, { unique: true });
 
-module.exports = mongoose.model("FeePlanSetup", feePlanSetupSchema);
+module.exports =
+  mongoose.models.FeePlanSetup ||
+  mongoose.model("FeePlanSetup", feePlanSetupSchema);

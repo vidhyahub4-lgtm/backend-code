@@ -257,6 +257,59 @@ const schoolSettingController = {
       data: getAllNewRegistration,
     });
   }),
+
+  admitStudent: asyncHandler(async (req, res) => {
+    const {
+      schId,
+      regno,
+      admno,
+      session,
+      classID,
+      sectionId,
+      rollNo,
+      admissionDate,
+    } = req.body;
+
+    if (!regno || !admno || !session || !classID || !sectionId) {
+      throw new AppError(
+        "regno, admno, session, classID and sectionId are required",
+        400,
+      );
+    }
+
+    const data = await schoolSettingService.admitStudent({
+      schId, // from the logged-in user, never from the body
+      userId: req.user._id,
+      regno,
+      admno,
+      session,
+      classID,
+      sectionId,
+      rollNo,
+      admissionDate,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Student admitted successfully",
+      data,
+    });
+  }),
+
+  listEnrollments: asyncHandler(async (req, res) => {
+    const {schId, session, classID, sectionId } = req.query;
+
+    if (!session) throw new AppError("session is required", 400);
+
+    const data = await schoolSettingService.listEnrollments({
+      schId,
+      session,
+      classID,
+      sectionId,
+    });
+
+    res.status(200).json({ success: true, count: data.length, data });
+  }),
 };
 
 module.exports = schoolSettingController;
