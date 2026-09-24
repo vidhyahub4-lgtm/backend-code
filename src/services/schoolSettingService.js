@@ -8,9 +8,9 @@ const feeheadtype = require("../models/school-setting/feeheadSetup");
 const mongoose = require("mongoose");
 const RegistrationCounter = require("../models/school-setting/registrationCounterSchema");
 const DevSuperSession = require("../models/dev_super/session");
-const feeService = require('./feeService')
-const StudentAdmission = require('../models/school-setting/Studentadmission')
-const StudentEnrollment = require('../models/school-setting/Studentenrollment');
+const feeService = require("./feeService");
+const StudentAdmission = require("../models/school-setting/Studentadmission");
+const StudentEnrollment = require("../models/school-setting/Studentenrollment");
 
 const getNextRegistrationNumber = async (schId, session, mongoSession) => {
   try {
@@ -613,6 +613,15 @@ const schoolSettingService = {
     return newStudentReg;
   },
 
+  getAlNewRegbyid: async ({ regno, schId }) => {
+    const newStudentReg = await NewStudentRegistration.findOne({
+      schId,
+      regno,
+    });
+
+    return newStudentReg;
+  },
+
   createfeeheadSetup: async ({ headtype, session, feehead, userId, schId }) => {
     // Find existing setup for same
     // headtype + session + school
@@ -712,6 +721,30 @@ const schoolSettingService = {
       throw new AppError("Class / section not found for this school", 404);
     }
 
+    const registration = await NewStudentRegistration.findOne({
+      schId,
+      session,
+      _id:regno,
+    });
+
+    if (!registration) {
+      throw new AppError(`Registration with regno ${regno} not found`, 404);
+    }
+
+    if (registration.status === "admitted") {
+      throw new AppError(
+        `Registration with regno ${registration?.regno} is already admitted`,
+        409,
+      );
+    }
+
+    if (registration.status === "rejected") {
+      throw new AppError(
+        `Registration with regno ${regno} has been rejected`,
+        409,
+      );
+    }
+
     const dbSession = await mongoose.startSession();
     let result;
 
@@ -755,6 +788,28 @@ const schoolSettingService = {
           dbSession,
         });
 
+        const updatedRegistration =
+          await NewStudentRegistration.findOneAndUpdate(
+            {
+              _id: registration._id,
+              status: "pending",
+            },
+            {
+              $set: {
+                status: "admitted",
+                admdate: admissionDate || new Date(),
+              },
+            },
+            {
+              new: true,
+              session: dbSession,
+            },
+          );
+
+        if (!updatedRegistration) {
+          throw new AppError("Registration status could not be updated", 409);
+        }
+
         result = { student, enrollment, demandsCreated };
       });
     } catch (err) {
@@ -772,7 +827,7 @@ const schoolSettingService = {
     return result;
   },
 
-    /*
+  /*
    * Class-wise student list for a session.
    */
   listEnrollments: async ({ schId, session, classID, sectionId }) => {

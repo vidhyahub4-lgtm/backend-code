@@ -28,6 +28,11 @@ const studentAdmissionSchema = new mongoose.Schema(
     },
 
     admissionDate: { type: Date, default: Date.now },
+    pystatus: {
+      type: String,
+      enum: ["pending", "done", "reject"],
+      default: "pending",
+    },
 
     status: {
       type: String,

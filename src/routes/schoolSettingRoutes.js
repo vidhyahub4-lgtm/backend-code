@@ -77,6 +77,8 @@ router.get(
   schoolSettingController.getAllNewRegistration,
 );
 
+router.get('/get-register-studbyid', authMiddleware,schoolSettingController.getRegisterStudentByID )
+
 // router.post("/stud-admission",authMiddleware, schoolSettingController.admitStudent);
 router.post(
   "/stud-admission",

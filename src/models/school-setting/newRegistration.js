@@ -158,11 +158,15 @@ const newRegistrationSchema = new mongoose.Schema(
       ref: "Class",
       required: true,
     },
-    admdate:{
-      type:Date,
-      default:null
+    admdate: {
+      type: Date,
+      default: null,
     },
-
+    status: {
+      type: String,
+      enum: ["pending", "admitted", "rejected"],
+      default: "pending",
+    },
     registrationdate: {
       type: Date,
       default: Date.now,
@@ -204,3 +208,4 @@ module.exports = mongoose.model(
   "NewStudentRegistration",
   newRegistrationSchema,
 );
+

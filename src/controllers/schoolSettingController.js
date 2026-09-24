@@ -258,6 +258,29 @@ const schoolSettingController = {
     });
   }),
 
+  getRegisterStudentByID: asyncHandler(async (req, res) => {
+    const { regno, schId } = req.body;
+
+    const getNewRegistrationbyid = await schoolSettingService.getAlNewRegbyid({
+      regno,
+      schId,
+    });
+
+    if (!getNewRegistrationbyid) {
+      return res.status(404).json({
+        success: false,
+        message: `Registered student with regno ${regno} not found`,
+        data: null,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Register Student data with regno ${regno} fetched successfully`,
+      data: getNewRegistrationbyid,
+    });
+  }),
+
   admitStudent: asyncHandler(async (req, res) => {
     const {
       schId,
@@ -297,7 +320,7 @@ const schoolSettingController = {
   }),
 
   listEnrollments: asyncHandler(async (req, res) => {
-    const {schId, session, classID, sectionId } = req.query;
+    const { schId, session, classID, sectionId } = req.query;
 
     if (!session) throw new AppError("session is required", 400);
 
