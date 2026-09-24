@@ -1,5 +1,5 @@
 const FeePlanSetup = require("../models/school-setting/feeplansetup");
-const FeeDemand = require("../models/school-setting/FeeDemand");
+const FeeDemand = require("../models/school-setting/feeDemand");
 const StudentEnrollment = require("../models/school-setting/StudentEnrollment");
 const AppError = require("../utils/appError");
 
