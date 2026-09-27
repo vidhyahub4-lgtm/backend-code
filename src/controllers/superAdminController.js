@@ -460,6 +460,64 @@ const superAdminController = {
   }),
 
 
+  createSubject : asyncHandler(async (req, res) => {
+  const {
+    schId,
+    schCode,
+    session,
+    subjectName,
+    subCode,
+  } = req.body;
+
+  const createdby = req.user?._id;
+
+  const subject = await superAdminService.createSubject({
+    schId,
+    schCode,
+    session,
+    subjectName,
+    subCode,
+    createdby,
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Subject created successfully",
+    data: subject,
+  });
+}),
+
+
+// Get Subjects
+getSubjects : asyncHandler(async (req, res) => {
+  const { schId, session } = req.query;
+
+  const subjects = await superAdminService.getSubjects({
+    schId,
+    session,
+  });
+
+  res.status(200).json({
+    success: true,
+    count: subjects.length,
+    data: subjects,
+  });
+}),
+
+
+// Get Subject By ID
+getSubjectById : asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const subject = await superAdminService.getSubjectById(id);
+
+  res.status(200).json({
+    success: true,
+    data: subject,
+  });
+})
+
+
 };
 
 module.exports = superAdminController;

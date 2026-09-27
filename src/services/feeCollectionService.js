@@ -4,6 +4,7 @@ const FeeReceipt = require("../models/school-setting/Feereceipt");
 const FeeCreditLedger = require("../models/school-setting/Feecreditledger");
 const Counter = require("../models/school-setting/counter");
 const AppError = require("../utils/appError");
+const StudentAdmission = require("../models/school-setting/Studentadmission");
 
 const PAY_MODES = ["cash", "upi", "cheque", "online", "card"];
 
@@ -63,6 +64,86 @@ module.exports = {
     };
   },
 
+  getAdmissionDues: async ({ schId, studentId, session }) => {
+    const demands = await FeeDemand.find({
+      schId,
+      studentId,
+      session,
+      headType: "admission",
+      status: { $in: ["unpaid", "partial"] },
+    })
+      .sort({ feetype: 1 })
+      .lean();
+
+    const items = demands.map((d) => ({
+      demandId: d._id,
+      feetype: d.feetype,
+      netAmount: d.netAmount,
+      paidAmount: d.paidAmount,
+      dueAmount: d.netAmount - d.paidAmount, // derived, never stored
+      status: d.status,
+    }));
+
+    return {
+      items,
+      totalDue: items.reduce((sum, i) => sum + i.dueAmount, 0),
+      advanceBalance: await getAdvanceBalance(schId, studentId),
+    };
+  },
+
+  /*
+   * Monthly due for one student — every unpaid/partial instalment,
+   * grouped by month so the counter screen can show "January: ₹500 due".
+   */
+  getMonthlyDues: async ({ schId, studentId, session }) => {
+    const demands = await FeeDemand.find({
+      schId,
+      studentId,
+      session,
+      headType: "monthly",
+      status: { $in: ["unpaid", "partial"] },
+    })
+      .sort({ installmentMonthNo: 1, feetype: 1 })
+      .lean();
+
+    const monthMap = new Map();
+
+    demands.forEach((d) => {
+      const key = String(d.installmentMonthId);
+      const dueAmount = d.netAmount - d.paidAmount; // derived, never stored
+
+      if (!monthMap.has(key)) {
+        monthMap.set(key, {
+          installmentMonthId: d.installmentMonthId,
+          installmentMonthNo: d.installmentMonthNo,
+          items: [],
+          monthDue: 0,
+        });
+      }
+
+      const month = monthMap.get(key);
+      month.items.push({
+        demandId: d._id,
+        feetype: d.feetype,
+        netAmount: d.netAmount,
+        paidAmount: d.paidAmount,
+        dueAmount,
+        status: d.status,
+      });
+      month.monthDue += dueAmount;
+    });
+
+    const months = [...monthMap.values()].sort(
+      (a, b) => a.installmentMonthNo - b.installmentMonthNo,
+    );
+
+    return {
+      months,
+      totalDue: months.reduce((sum, m) => sum + m.monthDue, 0),
+      advanceBalance: await getAdvanceBalance(schId, studentId),
+    };
+  },
+
   /*
    * Collect fees.
    * lines          = [{ demandId, amount }]  what the parent is paying now
@@ -116,10 +197,20 @@ module.exports = {
           studentId,
           session,
         }).session(dbSession);
+        console.log("2. Demands loaded:", demands.length);
 
         if (demands.length !== ids.length) {
-          throw new AppError("One or more fee items not found for this student", 404);
+          throw new AppError(
+            "One or more fee items not found for this student",
+            404,
+          );
         }
+
+        await StudentAdmission.updateOne(
+          { regno: studentId, schId, pystatus: "pending" },
+          { $set: { pystatus: "done" } },
+          { session: dbSession },
+        );
 
         const demandMap = new Map(demands.map((d) => [d._id.toString(), d]));
         const receiptLines = [];
@@ -152,6 +243,59 @@ module.exports = {
           });
         }
 
+        // for (const l of lines) {
+        //   console.log("3. Processing line:", l);
+
+        //   const d = demandMap.get(String(l.demandId));
+        //   const amt = Number(l.amount);
+
+        //   console.log("4. Demand:", d?._id);
+        //   console.log("5. Amount:", amt);
+        //   console.log("6. Status:", d?.status);
+        //   console.log("7. Net:", d?.netAmount);
+        //   console.log("8. Paid:", d?.paidAmount);
+
+        //   if (d.status === "cancelled") {
+        //     throw new AppError(`${d.feetype} demand is cancelled`, 400);
+        //   }
+
+        //   const due = d.netAmount - d.paidAmount;
+
+        //   console.log("9. Due:", due);
+
+        //   if (amt > due) {
+        //     throw new AppError(
+        //       `Amount for "${d.feetype}" exceeds the due amount (${due})`,
+        //       400,
+        //     );
+        //   }
+
+        //   d.paidAmount += amt;
+
+        //   console.log("10. Before save:", {
+        //     id: d._id,
+        //     paidAmount: d.paidAmount,
+        //   });
+
+        //   await d.save({ session: dbSession });
+
+        //   console.log("11. After save:", d._id);
+
+        //   receiptLines.push({
+        //     demandId: d._id,
+        //     headType: d.headType,
+        //     feetype: d.feetype,
+        //     installmentMonthId: d.installmentMonthId || null,
+        //     amount: amt,
+        //   });
+
+        //   console.log("12. Receipt line added");
+        // }
+
+        // console.log("13. Counter:", Counter);
+        // console.log("14. Counter.next:", Counter?.next);
+
+        console.log("Counter : ", Counter);
         const receiptNo = await Counter.next(
           `receipt:${schId}:${session}`,
           dbSession,
@@ -193,10 +337,16 @@ module.exports = {
           );
         }
       });
+    } catch (error) {
+      console.error("❌ collectFee transaction error:");
+      console.error("message:", error.message);
+      console.error("name:", error.name);
+      console.error("stack:", error.stack);
+
+      throw error;
     } finally {
       await dbSession.endSession();
     }
-
     return receipt;
   },
 

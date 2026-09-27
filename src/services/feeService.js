@@ -9,9 +9,10 @@ const AppError = require("../utils/appError");
  * and never overwrites a demand that already has payments.
  */
 
+
 const findPlanClass = (feePlan, classID) =>
   feePlan.classes.find((c) => c.classID.toString() === String(classID));
-
+ 
 const buildDemandOps = ({
   schId,
   session,
@@ -50,6 +51,8 @@ const buildDemandOps = ({
       upsert: true,
     },
   }));
+ 
+
 
 module.exports = {
   /*
@@ -109,50 +112,129 @@ module.exports = {
    * (optionally only one class) for ONE instalment month.
    * Run once per month by the accountant.
    */
+  // generateMonthlyDemands: async ({
+  //   schId,
+  //   session,
+  //   installmentMonthId,
+  //   installmentMonthNo,
+  //   classID = null,
+  //   userId,
+  // }) => {
+  //   if (!installmentMonthId) {
+  //     throw new AppError("installmentMonthId is required", 400);
+  //   }
+
+  //   console.log("schId : ", schId, "session : ", session);
+
+  //   const feePlan = await FeePlanSetup.findOne({
+  //     schId,
+  //     session,
+  //     headType: "monthly",
+  //   }).lean();
+
+  //   if (!feePlan) {
+  //     throw new AppError(
+  //       "Monthly fee plan is not set up for this session",
+  //       404,
+  //     );
+  //   }
+
+  //   const enrollments = await StudentEnrollment.find({
+  //     schId,
+  //     session,
+  //     status: "active",
+  //     ...(classID ? { classID } : {}),
+  //   }).lean();
+
+  //   let skippedStudents = 0;
+  //   const ops = [];
+
+  //   for (const en of enrollments) {
+  //     const planClass = findPlanClass(feePlan, en.classID);
+  //     if (!planClass) {
+  //       skippedStudents++;
+  //       continue;
+  //     }
+  //     console.log(planClass);
+  //     ops.push(
+  //       ...buildDemandOps({
+  //         schId,
+  //         session,
+  //         studentId: en.studentId,
+  //         classID: en.classID,
+  //         headType: "monthly",
+  //         feePlan,
+  //         planHeads: planClass.heads,
+  //         installmentMonthId,
+  //         installmentMonthNo,
+  //         userId,
+  //       }),
+  //     );
+  //   }
+
+  //   if (!ops.length) {
+  //     return { students: enrollments.length, created: 0, skippedStudents };
+  //   }
+
+  //   console.log("ENROLLMENTS:", enrollments.length);
+  //   console.log("OPS LENGTH:", ops.length);
+  //   console.log("OPS:", JSON.stringify(ops, null, 2));
+  //   const result = await FeeDemand.bulkWrite(ops, { ordered: false });
+  //   console.log("BULK RESULT:", result);
+  //   return {
+  //     students: enrollments.length,
+  //     created: result.upsertedCount, // rows that did not exist before
+  //     skippedStudents, // class missing in the monthly plan
+  //   };
+  // },
+
   generateMonthlyDemands: async ({
     schId,
     session,
-    installmentMonthId,
-    installmentMonthNo,
-    classID = null,
     userId,
+    resolvedInstallments, // [{ classID, installmentMonthId, installmentMonthNo }]
   }) => {
-    if (!installmentMonthId) {
-      throw new AppError("installmentMonthId is required", 400);
-    }
-
-    console.log("schId : ", schId, "session : ", session);
-
     const feePlan = await FeePlanSetup.findOne({
       schId,
       session,
       headType: "monthly",
     }).lean();
-
+ 
     if (!feePlan) {
-      throw new AppError(
-        "Monthly fee plan is not set up for this session",
-        404,
-      );
+      throw new AppError("Monthly fee plan is not set up for this session", 404);
     }
-
+ 
+    const classIds = resolvedInstallments.map((r) => r.classID);
+ 
     const enrollments = await StudentEnrollment.find({
       schId,
       session,
       status: "active",
-      ...(classID ? { classID } : {}),
+      classID: { $in: classIds },
     }).lean();
 
-    let skippedStudents = 0;
+    console.log('enrollnbnt stud : ',enrollments)
+ 
+    const installmentByClass = new Map(
+      resolvedInstallments.map((r) => [r.classID.toString(), r]),
+    );
+ 
+    let skippedNoFeePlan = 0;
+    const skippedClasses = new Set();
     const ops = [];
-
+ 
     for (const en of enrollments) {
+      const classId = en.classID.toString();
+ 
       const planClass = findPlanClass(feePlan, en.classID);
       if (!planClass) {
-        skippedStudents++;
+        skippedNoFeePlan++;
+        skippedClasses.add(classId);
         continue;
       }
-      console.log(planClass);
+ 
+      const inst = installmentByClass.get(classId);
+ 
       ops.push(
         ...buildDemandOps({
           schId,
@@ -162,26 +244,36 @@ module.exports = {
           headType: "monthly",
           feePlan,
           planHeads: planClass.heads,
-          installmentMonthId,
-          installmentMonthNo,
+          installmentMonthId: inst.installmentMonthId,
+          installmentMonthNo: inst.installmentMonthNo,
           userId,
         }),
       );
     }
-
+ 
     if (!ops.length) {
-      return { students: enrollments.length, created: 0, skippedStudents };
+      return {
+        students: enrollments.length,
+        created: 0,
+        skippedNoFeePlan,
+        skippedClasses: [...skippedClasses],
+      };
     }
 
-    console.log("ENROLLMENTS:", enrollments.length);
-    console.log("OPS LENGTH:", ops.length);
-    console.log("OPS:", JSON.stringify(ops, null, 2));
+    console.log('ops : ', ops)
+ 
     const result = await FeeDemand.bulkWrite(ops, { ordered: false });
-    console.log("BULK RESULT:", result);
+    console.log("bulkWrite result:", JSON.stringify(result, null, 2));
+ 
     return {
       students: enrollments.length,
       created: result.upsertedCount, // rows that did not exist before
-      skippedStudents, // class missing in the monthly plan
+      skippedNoFeePlan, // class missing from the monthly FeePlanSetup
+      skippedClasses: [...skippedClasses],
     };
-  },
+  }
+
+ 
+
+ 
 };

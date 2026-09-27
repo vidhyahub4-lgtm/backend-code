@@ -85,9 +85,9 @@ const feeReceiptSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-feeReceiptSchema.pre("validate", function (next) {
+feeReceiptSchema.pre("validate", function () {
   this.totalAmount = this.lines.reduce((sum, l) => sum + l.amount, 0);
-  next();
+
 });
 
 feeReceiptSchema.index({ schId: 1, session: 1, receiptNo: 1 }, { unique: true });

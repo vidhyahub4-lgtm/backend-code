@@ -50,4 +50,10 @@ router.post('/late-fine-setup',authMiddleware, superAdminMiddleware,superAdminCo
 router.get('/get-lat-fine-setup', authMiddleware, superAdminController.getAlllatefinesetup)
 
 
+
+router.post('/create-subject',authMiddleware, superAdminController.createSubject )
+router.post('/getAll-subject',authMiddleware, superAdminController.getSubjects )
+router.post('/getsubject-byid',authMiddleware, superAdminController.getSubjectById )
+
+
 module.exports = router;

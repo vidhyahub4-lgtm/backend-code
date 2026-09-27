@@ -53,13 +53,13 @@ const feeDemandSchema = new mongoose.Schema(
     // look it up: SchoolPayModeSetup.feeStructure[].installment
     //               .find(i => i._id.equals(installmentMonthId))
     installmentMonthId: {
-      type: Number,
-      required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
     },
 
     installmentMonthNo: {
       type: Number,
-      required: true,
+      default: null,
     },
 
     planAmount: { type: Number, required: true, min: 0 },
@@ -79,7 +79,7 @@ const feeDemandSchema = new mongoose.Schema(
 );
 
 // keep netAmount and status consistent whenever a demand is saved
-feeDemandSchema.pre("validate", function (next) {
+feeDemandSchema.pre("validate", function () {
   if (this.concession > this.planAmount) {
     return next(new Error("Concession cannot exceed the plan amount"));
   }
@@ -96,8 +96,6 @@ feeDemandSchema.pre("validate", function (next) {
     else if (this.paidAmount < this.netAmount) this.status = "partial";
     else this.status = "paid";
   }
-
-  next();
 });
 
 // the same fee can never be charged twice to a student

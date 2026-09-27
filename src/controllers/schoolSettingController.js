@@ -264,7 +264,7 @@ const schoolSettingController = {
     const getNewRegistrationbyid = await schoolSettingService.getAlNewRegbyid({
       regno,
       schId,
-    });
+    })
 
     if (!getNewRegistrationbyid) {
       return res.status(404).json({

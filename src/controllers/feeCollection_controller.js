@@ -7,27 +7,49 @@ module.exports = {
   // POST /api/fees/demands/monthly
   // Generates demands for EVERY instalment month defined for each class
   // in SchoolPayModeSetup — no month is picked by the frontend.
-  generateMonthlyDemands: asyncHandler(async (req, res) => {
-    const { session, classID, schId, installmentMonthId, installmentMonthNo } =
-      req.body;
+  // generateMonthlyDemands: asyncHandler(async (req, res) => {
+  //   const { session, classID, schId, installmentMonthId, installmentMonthNo } =
+  //     req.body;
 
-    if (!session || !installmentMonthId || !installmentMonthNo) {
-      throw new AppError("session, installmentMonthId, installmentMonthNo are required", 400);
-    }
+  //   if (!session || !installmentMonthId || !installmentMonthNo) {
+  //     throw new AppError("session, installmentMonthId, installmentMonthNo are required", 400);
+  //   }
     
-    const data = await feeDemandService.generateMonthlyDemands({
-      schId, // from the logged-in user, never from the body
-      userId: req.user?._id,
-      session,
-      classID,
-      installmentMonthId,
-      installmentMonthNo,
-    });
+  //   const data = await feeDemandService.generateMonthlyDemands({
+  //     schId, // from the logged-in user, never from the body
+  //     userId: req.user?._id,
+  //     session,
+  //     classID,
+  //     installmentMonthId,
+  //     installmentMonthNo,
+  //   });
 
+  //   res.status(200).json({
+  //     success: true,
+  //     message: "Monthly fee demands generated",
+  //     data,
+  //   });
+  // }),
+
+   generateMonthlyDemands: asyncHandler(async (req, res) => {
+    const { schId, session, resolvedInstallments, missingClasses } =
+      req.feeDemandContext;
+      console.log(schId, session, resolvedInstallments, missingClasses)
+ 
+    const data = await feeDemandService.generateMonthlyDemands({
+      schId,
+      session,
+      userId: req.user._id,
+      resolvedInstallments,
+    });
+ 
     res.status(200).json({
       success: true,
       message: "Monthly fee demands generated",
-      data,
+      data: {
+        ...data,
+        notConfiguredForThisMonth: missingClasses,
+      },
     });
   }),
 
@@ -45,6 +67,35 @@ module.exports = {
     res.status(200).json({ success: true, data });
   }),
 
+
+  // GET /api/fees/students/:studentId/admission-due?session=
+  getAdmissionDues: asyncHandler(async (req, res) => {
+    const { session,schId } = req.query;
+    if (!session) throw new AppError("session is required", 400);
+ 
+    const data = await feeCollectionService.getAdmissionDues({
+      schId,
+      studentId: req.params.studentId,
+      session,
+    });
+ 
+    res.status(200).json({ success: true, data });
+  }),
+ 
+  // GET /api/fees/students/:studentId/monthly-due?session=
+  getMonthlyDues: asyncHandler(async (req, res) => {
+    const { session,schId } = req.query;
+    if (!session) throw new AppError("session is required", 400);
+ 
+    const data = await feeCollectionService.getMonthlyDues({
+      schId,
+      studentId: req.params.studentId,
+      session,
+    });
+ 
+    res.status(200).json({ success: true, data });
+  }),
+
   // POST /api/fees/collect
   collectFee: asyncHandler(async (req, res) => {
     const {
@@ -55,6 +106,8 @@ module.exports = {
       paymentDate,
       lines,
       advanceAmount,
+      schId
+      
     } = req.body;
 
     if (!session || !studentId || !mode) {
@@ -62,7 +115,7 @@ module.exports = {
     }
 
     const data = await feeCollectionService.collectFee({
-      schId: req.user.schId,
+      schId,
       userId: req.user._id,
       session,
       studentId,

@@ -617,7 +617,7 @@ const schoolSettingService = {
     const newStudentReg = await NewStudentRegistration.findOne({
       schId,
       regno,
-    });
+    }).populate({ path: "classApplyfor", select: "className classInWord", });
 
     return newStudentReg;
   },
@@ -724,16 +724,40 @@ const schoolSettingService = {
     const registration = await NewStudentRegistration.findOne({
       schId,
       session,
-      _id:regno,
+      _id: regno,
     });
 
     if (!registration) {
       throw new AppError(`Registration with regno ${regno} not found`, 404);
     }
 
+    // if (registration.status === "admitted") {
+    //   throw new AppError(
+    //     `Registration with regno ${registration?.regno} is already admitted`,
+    //     409,
+    //   );
+    // }
     if (registration.status === "admitted") {
+      const admission = await StudentAdmission.findOne({
+        regno
+      });
+
+      if (admission?.pystatus === "pending") {
+        throw new AppError(
+          `Student with registration number ${registration?.regno} has already been admitted, but the admission payment is still pending.`,
+          409,
+        );
+      }
+
+      if (admission?.pystatus === "done") {
+        throw new AppError(
+          `Student with registration number ${registration?.regno} has already been admitted, and the admission payment has been completed.`,
+          408,
+        );
+      }
+
       throw new AppError(
-        `Registration with regno ${registration?.regno} is already admitted`,
+        `Student with registration number ${registration?.regno} has already been admitted.`,
         409,
       );
     }
