@@ -585,7 +585,10 @@ const schoolSettingService = {
               lper,
               lsch,
               lboard,
-              classApplyfor,
+              classApplyfor: {
+                classID: classApplyfor.classID,
+                sectionID: classApplyfor.sectionID,
+              },
               registrationdate,
               Image,
               createdby: userId,
@@ -617,7 +620,14 @@ const schoolSettingService = {
     const newStudentReg = await NewStudentRegistration.findOne({
       schId,
       regno,
-    }).populate({ path: "classApplyfor", select: "className classInWord", });
+    }).populate({
+      path: "classApplyfor.classID",
+      select: "className classInWord",
+    })
+    .populate({
+      path: "classApplyfor.sectionID",
+      select: "sectionName",
+    });
 
     return newStudentReg;
   },
@@ -739,7 +749,7 @@ const schoolSettingService = {
     // }
     if (registration.status === "admitted") {
       const admission = await StudentAdmission.findOne({
-        regno
+        regno,
       });
 
       if (admission?.pystatus === "pending") {

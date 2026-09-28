@@ -153,10 +153,23 @@ const newRegistrationSchema = new mongoose.Schema(
     },
 
     // Admission Details
+    // classApplyfor: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Class",
+    //   required: true,
+    // },
     classApplyfor: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Class",
-      required: true,
+      classID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Class",
+        required: true,
+      },
+
+      sectionID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Section",
+        // required: true,
+      },
     },
     admdate: {
       type: Date,
@@ -208,4 +221,3 @@ module.exports = mongoose.model(
   "NewStudentRegistration",
   newRegistrationSchema,
 );
-

@@ -2,9 +2,11 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Teacher = require("../models/teacher/teacher");
 const ClassTeacherAssignment = require("../models/teacher/classteacherassign");
+const AppError = require("../utils/appError");
 
-/** Add a new teacher for a school */
-async function addTeacher({
+
+const teacherService = {
+   addTeacher:async({
   name,
   email,
   phone,
@@ -14,7 +16,7 @@ async function addTeacher({
   session,
   createdby,
   classTeacherOf,
-}) {
+})=> {
   const existing = await Teacher.findOne({ email, schId });
   if (existing) {
     const err = new Error(
@@ -39,13 +41,9 @@ async function addTeacher({
   });
 
   return teacher;
-}
+},
 
-/**
- * Assign a teacher to teach one or more class-sections (subject/general teaching duty).
- * This does NOT make them the class teacher — see makeClassTeacher for that.
- */
-async function assignClassToTeacher({ teacherId, schId, classes }) {
+assignClassToTeacher:async({ teacherId, schId, classes })=> {
   // classes: [{ class, section }, ...]
   const teacher = await Teacher.findOne({ _id: teacherId, schId });
   if (!teacher) {
@@ -68,23 +66,16 @@ async function assignClassToTeacher({ teacherId, schId, classes }) {
 
   await teacher.save();
   return teacher;
-}
+},
 
-/**
- * Make a teacher the CLASS TEACHER of a given class-section for a session.
- * - Enforces one class teacher per class-section-session (unique index + pre-check).
- * - If the teacher was already class teacher of another class, that assignment is
- *   cleared (a teacher can only be class teacher of one class-section at a time).
- * - Also ensures the class-section is present in the teacher's assignedClasses.
- */
-async function makeClassTeacher({
+makeClassTeacher:async({
   teacherId,
   schId,
   session,
   class: cls,
   section,
   assignedBy,
-}) {
+}) => {
   const teacher = await Teacher.findOne({ _id: teacherId, schId });
   if (!teacher) {
     const err = new Error("Teacher not found");
@@ -147,19 +138,18 @@ async function makeClassTeacher({
   await teacher.save();
 
   return { teacher, assignment };
-}
+},
 
-/** Get the class teacher of a given class-section for a session (used to authorize attendance marking) */
-async function getClassTeacher({ schId, session, class: cls, section }) {
+ getClassTeacher :async ({ schId, session, class: cls, section })=> {
   return ClassTeacherAssignment.findOne({
     schId,
     session,
     class: cls,
     section,
   }).populate("teacher", "name email");
-}
+},
 
-async function teacherLogin({ email, password }) {
+ teacherLogin :async ({ email, password })=> {
   if (!email || !password) {
     throw new Error("Email, password and school are required");
   }
@@ -225,11 +215,7 @@ async function teacherLogin({ email, password }) {
   };
 }
 
-module.exports = {
-  addTeacher,
-  assignClassToTeacher,
-  makeClassTeacher,
-  getClassTeacher,
+}
 
-  teacherLogin,
-};
+
+module.exports = teacherService;

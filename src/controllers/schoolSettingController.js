@@ -165,6 +165,9 @@ const schoolSettingController = {
     const data = {
       ...req.body,
       Image: req.file ? req.file.filename : "",
+       classApplyfor: req.body.classApplyfor
+      ? JSON.parse(req.body.classApplyfor)
+      : null,
     };
     const registration = await schoolSettingService.createNewRegistration(
       userId,
