@@ -8,7 +8,7 @@ const teacherAuth = require('../middileware/teacherAuth')
 
 router.post("/",authMiddleware, teacherController.addTeacher);
 router.post("/:teacherId/assign-class", teacherController.assignClassToTeacher);
-router.post("/:teacherId/make-class-teacher", teacherController.makeClassTeacher);
+router.post("/:teacherId/make-class-teacher",authMiddleware, teacherController.makeClassTeacher);
 router.get("/class-teacher", teacherController.getClassTeacher);
 
 

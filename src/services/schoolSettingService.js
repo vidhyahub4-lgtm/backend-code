@@ -11,6 +11,7 @@ const DevSuperSession = require("../models/dev_super/session");
 const feeService = require("./feeService");
 const StudentAdmission = require("../models/school-setting/Studentadmission");
 const StudentEnrollment = require("../models/school-setting/Studentenrollment");
+const Subject = require("../models/super-admin/subject");
 
 const getNextRegistrationNumber = async (schId, session, mongoSession) => {
   try {
@@ -620,14 +621,15 @@ const schoolSettingService = {
     const newStudentReg = await NewStudentRegistration.findOne({
       schId,
       regno,
-    }).populate({
-      path: "classApplyfor.classID",
-      select: "className classInWord",
     })
-    .populate({
-      path: "classApplyfor.sectionID",
-      select: "sectionName",
-    });
+      .populate({
+        path: "classApplyfor.classID",
+        select: "className classInWord",
+      })
+      .populate({
+        path: "classApplyfor.sectionID",
+        select: "sectionName",
+      });
 
     return newStudentReg;
   },
@@ -877,6 +879,85 @@ const schoolSettingService = {
       .sort({ rollNo: 1 })
       .lean();
   },
+
+  createSubject: async ({ schId, schCode, session, subjects, createdby }) => {
+    if (!Array.isArray(subjects) || subjects.length === 0) {
+      throw new AppError("subjects array is required", 400);
+    }
+
+    // Normalize incoming subjects
+    const newSubjects = subjects.map((subject) => ({
+      subjectName: subject.subjectName.trim(),
+      subCode: subject.subCode.trim().toUpperCase(),
+    }));
+
+    // Check duplicate codes inside request itself
+    const codes = newSubjects.map((subject) => subject.subCode);
+
+    const duplicateCodes = codes.filter(
+      (code, index) => codes.indexOf(code) !== index,
+    );
+
+    if (duplicateCodes.length > 0) {
+      throw new AppError(`Duplicate subject code: ${duplicateCodes[0]}`, 400);
+    }
+
+    // Find existing school + session subject document
+    let subjectDoc = await Subject.findOne({
+      schId,
+      session,
+    });
+
+    // If document already exists
+    if (subjectDoc) {
+      for (const newSubject of newSubjects) {
+        const alreadyExists = subjectDoc.subjects.some(
+          (existingSubject) => existingSubject.subCode === newSubject.subCode,
+        );
+
+        if (alreadyExists) {
+          throw new AppError(
+            `Subject code ${newSubject.subCode} already exists`,
+            400,
+          );
+        }
+
+        subjectDoc.subjects.push(newSubject);
+      }
+
+      await subjectDoc.save();
+
+      return subjectDoc;
+    }
+
+    // Create first document
+    subjectDoc = await Subject.create({
+      schId,
+      schCode,
+      session,
+      subjects: newSubjects,
+      createdby,
+    });
+
+    return subjectDoc;
+  },
+
+  // Get all subjects
+  getSubjects: async ({ schId, session }) => {
+    const filter = {
+      schId,
+    };
+
+    if (session) {
+      filter.session = session;
+    }
+
+    return await Subject.find(filter)
+      .populate("session", "session")
+      .populate("schId", "schName schCode")
+      .sort({ subjectName: 1 });
+  },
+
 };
 
 module.exports = schoolSettingService;

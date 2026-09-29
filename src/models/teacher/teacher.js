@@ -44,13 +44,11 @@ const teacherSchema = new Schema(
         classID: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Class",
-    
         },
 
         sectionID: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Section",
-        
         },
 
         subjects: [
@@ -58,42 +56,48 @@ const teacherSchema = new Schema(
             subId: {
               type: mongoose.Schema.Types.ObjectId,
               ref: "Subject",
-              
             },
 
             subCode: {
               type: String,
-             
+
               trim: true,
               uppercase: true,
             },
 
             subName: {
               type: String,
-             
+
               trim: true,
             },
 
             _id: false,
           },
         ],
+        timing: {
+          type: String,
+          trim: true,
+          default: "",
+        },
 
         _id: false,
       },
     ],
 
     // Teacher is class teacher of one class-section
-    classTeacherOf: {
-      classID: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Class",
-      },
+    classTeacherOf: [
+      {
+        classID: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Class",
+        },
 
-      sectionID: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Section",
+        sectionID: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Section",
+        },
       },
-    },
+    ],
 
     status: {
       type: String,
@@ -108,12 +112,10 @@ const teacherSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-teacherSchema.index(
-  { email: 1, schId: 1 },
-  { unique: true }
-);
+teacherSchema.index({ email: 1, schId: 1 }, { unique: true });
+
 
 module.exports = mongoose.model("Teacher", teacherSchema);

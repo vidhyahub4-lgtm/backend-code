@@ -165,9 +165,9 @@ const schoolSettingController = {
     const data = {
       ...req.body,
       Image: req.file ? req.file.filename : "",
-       classApplyfor: req.body.classApplyfor
-      ? JSON.parse(req.body.classApplyfor)
-      : null,
+      classApplyfor: req.body.classApplyfor
+        ? JSON.parse(req.body.classApplyfor)
+        : null,
     };
     const registration = await schoolSettingService.createNewRegistration(
       userId,
@@ -267,7 +267,7 @@ const schoolSettingController = {
     const getNewRegistrationbyid = await schoolSettingService.getAlNewRegbyid({
       regno,
       schId,
-    })
+    });
 
     if (!getNewRegistrationbyid) {
       return res.status(404).json({
@@ -336,6 +336,62 @@ const schoolSettingController = {
 
     res.status(200).json({ success: true, count: data.length, data });
   }),
+
+  createSubject: asyncHandler(async (req, res) => {
+  const {
+    schId,
+    schCode,
+    session,
+    subjects,
+  } = req.body;
+
+  const createdby = req.user?._id;
+
+  if (!schId) {
+    throw new AppError("schId is required", 400);
+  }
+
+  if (!session) {
+    throw new AppError("session is required", 400);
+  }
+
+  if (!Array.isArray(subjects) || subjects.length === 0) {
+    throw new AppError("subjects array is required", 400);
+  }
+
+  const subject = await schoolSettingService.createSubject({
+    schId,
+    schCode,
+    session,
+    subjects,
+    createdby,
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Subjects created successfully",
+    data: subject,
+  });
+}),
+
+  // Get Subjects
+  getSubjects: asyncHandler(async (req, res) => {
+    const { schId, session } = req.query;
+
+    const subjects = await schoolSettingService.getSubjects({
+      schId,
+      session,
+    });
+
+    res.status(200).json({
+      success: true,
+      count: subjects.length,
+      data: subjects,
+    });
+  }),
+
+
+
 };
 
 module.exports = schoolSettingController;

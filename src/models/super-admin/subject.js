@@ -22,18 +22,24 @@ const subjectSchema = new mongoose.Schema(
       index: true,
     },
 
-    subjectName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    subjects: [
+      {
+        subjectName: {
+          type: String,
+          required: true,
+          trim: true,
+        },
 
-    subCode: {
-      type: String,
-      required: true,
-      trim: true,
-      uppercase: true,
-    },
+        subCode: {
+          type: String,
+          required: true,
+          trim: true,
+          uppercase: true,
+        },
+
+        _id: false,
+      },
+    ],
 
     createdby: {
       type: mongoose.Schema.Types.ObjectId,
@@ -43,19 +49,6 @@ const subjectSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
-);
-
-// Same subject code cannot be duplicated
-// for the same school and session
-subjectSchema.index(
-  {
-    schId: 1,
-    session: 1,
-    subCode: 1,
-  },
-  {
-    unique: true,
   }
 );
 

@@ -9,7 +9,6 @@ const Section = require("../models/super-admin/section");
 const School = require("../models/super-admin/schoolModels");
 const SchoolPayModeSetup = require("../models/super-admin/SchoolPayModeSetup");
 const SchoolCode = require("../models/super-admin/schoolCode");
-const Subject = require("../models/super-admin/subject");
 const Session = require("../models/dev_super/session");
 const LateFineSetup = require("../models/super-admin/lateFineSetup");
 
@@ -333,68 +332,7 @@ const superAdminService = {
     return data;
   },
 
-  createSubject: async ({
-    schId,
-    schCode,
-    session,
-    subjectName,
-    subCode,
-    createdby,
-  }) => {
-    // Check duplicate subject code
-    const existingSubject = await Subject.findOne({
-      schId,
-      session,
-      subCode: subCode.trim().toUpperCase(),
-    });
-
-    if (existingSubject) {
-      throw new AppError(
-        "Subject code already exists for this school and session",
-        400,
-      );
-    }
-
-    const subject = new Subject({
-      schId,
-      schCode,
-      session,
-      subjectName,
-      subCode: subCode.trim().toUpperCase(),
-      createdby,
-    });
-
-    return await subject.save();
-  },
-
-  // Get all subjects
-  getSubjects: async ({ schId, session }) => {
-    const filter = {
-      schId,
-    };
-
-    if (session) {
-      filter.session = session;
-    }
-
-    return await Subject.find(filter)
-      .populate("session", "session")
-      .populate("schId", "schName schCode")
-      .sort({ subjectName: 1 });
-  },
-
-  // Get subject by ID
-  getSubjectById: async (id) => {
-    const subject = await Subject.findById(id)
-      .populate("session", "session")
-      .populate("schId", "schName schCode");
-
-    if (!subject) {
-      throw new AppError("Subject not found", 404);
-    }
-
-    return subject;
-  },
+ 
 };
 
 module.exports = superAdminService;

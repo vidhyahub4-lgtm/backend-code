@@ -207,7 +207,7 @@ module.exports = {
         }
 
         await StudentAdmission.updateOne(
-          { regno: studentId, schId, pystatus: "pending" },
+          { _id: studentId, schId, pystatus: "pending" },
           { $set: { pystatus: "done" } },
           { session: dbSession },
         );
@@ -243,59 +243,6 @@ module.exports = {
           });
         }
 
-        // for (const l of lines) {
-        //   console.log("3. Processing line:", l);
-
-        //   const d = demandMap.get(String(l.demandId));
-        //   const amt = Number(l.amount);
-
-        //   console.log("4. Demand:", d?._id);
-        //   console.log("5. Amount:", amt);
-        //   console.log("6. Status:", d?.status);
-        //   console.log("7. Net:", d?.netAmount);
-        //   console.log("8. Paid:", d?.paidAmount);
-
-        //   if (d.status === "cancelled") {
-        //     throw new AppError(`${d.feetype} demand is cancelled`, 400);
-        //   }
-
-        //   const due = d.netAmount - d.paidAmount;
-
-        //   console.log("9. Due:", due);
-
-        //   if (amt > due) {
-        //     throw new AppError(
-        //       `Amount for "${d.feetype}" exceeds the due amount (${due})`,
-        //       400,
-        //     );
-        //   }
-
-        //   d.paidAmount += amt;
-
-        //   console.log("10. Before save:", {
-        //     id: d._id,
-        //     paidAmount: d.paidAmount,
-        //   });
-
-        //   await d.save({ session: dbSession });
-
-        //   console.log("11. After save:", d._id);
-
-        //   receiptLines.push({
-        //     demandId: d._id,
-        //     headType: d.headType,
-        //     feetype: d.feetype,
-        //     installmentMonthId: d.installmentMonthId || null,
-        //     amount: amt,
-        //   });
-
-        //   console.log("12. Receipt line added");
-        // }
-
-        // console.log("13. Counter:", Counter);
-        // console.log("14. Counter.next:", Counter?.next);
-
-        console.log("Counter : ", Counter);
         const receiptNo = await Counter.next(
           `receipt:${schId}:${session}`,
           dbSession,

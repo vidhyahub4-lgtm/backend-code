@@ -37,7 +37,7 @@ const studentEnrollmentSchema = new mongoose.Schema(
       required: true,
     },
 
-    rollNo: { type: Number, min: 1 },
+    rollNo: { type: Number, min: 0, default:0 },
 
     status: {
       type: String,

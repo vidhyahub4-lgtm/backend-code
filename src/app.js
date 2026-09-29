@@ -32,6 +32,7 @@ app.use("/api/fees", require("./routes/feeCollectionRoutes"));
 app.use("/api/teachers", require("./routes/teacherRoute"));
 app.use("/api/attendance", require("./routes/attendanceRoute"));
 
+app.use('/api/student', require('./routes/studentRoute') )
 //dont touch this section 
 app.use('/dev_super_admin', require('./routes/dev_super_Route'))
 

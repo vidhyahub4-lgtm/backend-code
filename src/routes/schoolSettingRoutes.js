@@ -91,4 +91,11 @@ router.get(
   schoolSettingController.listEnrollments,
 );
 
+
+
+router.post('/create-subject',authMiddleware, schoolSettingController.createSubject )
+router.post('/getAll-subject',authMiddleware, schoolSettingController.getSubjects )
+
+
+
 module.exports = router;
