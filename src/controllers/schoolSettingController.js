@@ -262,7 +262,7 @@ const schoolSettingController = {
   }),
 
   getRegisterStudentByID: asyncHandler(async (req, res) => {
-    const { regno, schId } = req.body;
+    const { regno, schId } = req.query;
 
     const getNewRegistrationbyid = await schoolSettingService.getAlNewRegbyid({
       regno,
