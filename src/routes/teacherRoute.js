@@ -10,6 +10,7 @@ router.post("/",authMiddleware, teacherController.addTeacher);
 router.post("/:teacherId/assign-class", teacherController.assignClassToTeacher);
 router.post("/:teacherId/make-class-teacher",authMiddleware, teacherController.makeClassTeacher);
 router.get("/class-teacher", teacherController.getClassTeacher);
+router.get("/", authMiddleware, teacherController.getTeachers);
 
 
 router.post("/login", teacherController.loginTeacher);

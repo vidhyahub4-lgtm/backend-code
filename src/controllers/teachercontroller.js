@@ -107,6 +107,22 @@ const teacherController = {
     });
   }),
 
+    getTeachers: asyncHandler(async (req, res) => {
+    const { schId, session } = req.query;
+
+    if (!schId) {
+      throw new AppError("schId is required", 400);
+    }
+
+    const teachers = await teacherService.getTeachers({ schId, session });
+
+    return res.status(200).json({
+      success: true,
+      count: teachers.length,
+      data: teachers,
+    });
+  }),
+
   loginTeacher: asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 

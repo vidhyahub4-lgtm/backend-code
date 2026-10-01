@@ -201,6 +201,21 @@ const teacherService = {
     return teachers;
   },
 
+    getTeachers: async ({ schId, session }) => {
+    const query = { schId };
+    if (session) query.session = session;
+
+    const teachers = await Teacher.find(query)
+      .select("-password")
+      .sort({ name: 1 })
+      .populate("assignedClasses.classID", "className classInWord")
+      .populate("assignedClasses.sectionID", "sectionName")
+      .populate("classTeacherOf.classID", "className classInWord")
+      .populate("classTeacherOf.sectionID", "sectionName");
+
+    return teachers;
+  },
+
   teacherLogin: async ({ email, password }) => {
     if (!email || !password) {
       throw new Error("Email, password and school are required");
