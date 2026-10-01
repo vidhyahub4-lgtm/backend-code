@@ -955,7 +955,7 @@ const schoolSettingService = {
     return await Subject.find(filter)
       .populate("session", "session")
       .populate("schId", "schName schCode")
-      .sort({ subjectName: 1 });
+     
   },
 
 };
