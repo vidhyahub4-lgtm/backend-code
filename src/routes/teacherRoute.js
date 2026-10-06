@@ -14,6 +14,6 @@ router.get("/", authMiddleware, teacherController.getTeachers);
 
 
 router.post("/login", teacherController.loginTeacher);
-router.get('/class-student-list',teacherAuth, teacherController.classStudList)
+router.get('/class-student-list', teacherController.classStudList)
 
 module.exports = router;

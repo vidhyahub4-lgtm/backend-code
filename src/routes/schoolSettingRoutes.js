@@ -85,11 +85,8 @@ router.post(
   authMiddleware,
   schoolSettingController.admitStudent,
 );
-router.get(
-  "/enrollment-list",
-  authMiddleware,
-  schoolSettingController.listEnrollments,
-);
+
+router.get('/enrolled-studentsOfClass', authMiddleware, schoolSettingController.getAllEnrollStudent)
 
 
 

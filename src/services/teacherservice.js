@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Teacher = require("../models/teacher/teacher");
 const ClassTeacherAssignment = require("../models/teacher/classteacherassign");
+const studentEnrollmentSchema = require("../models/school-setting/Studentenrollment");
 const AppError = require("../utils/appError");
 
 const teacherService = {
@@ -281,6 +282,30 @@ const teacherService = {
       },
     };
   },
-};
 
+  classStudList: async ({ teacherid }) => {
+    if (!teacherid) {
+      throw new AppError("teacherid is required", 400);
+    }
+    let teacher = await Teacher.findById(teacherid)
+      .select("classTeacherOf.classID classTeacherOf.sectionID" );
+
+    if (!teacher) {
+      throw new AppError("Teacher not found", 404);
+    }
+    let stud = await studentEnrollmentSchema.find({
+      classID: teacher.classTeacherOf[0].classID,
+      sectionId: teacher.classTeacherOf[0].sectionID,
+    }).populate({
+      path: "studentId",
+      select: "admno",
+      populate: {
+        path: "regno",
+        select: "sname dob email whatAppno mob1 mob2 age fname category gender Image mname fname",
+      },
+    })
+    .select("rollNo status");
+    return stud;
+  }
+}
 module.exports = teacherService;

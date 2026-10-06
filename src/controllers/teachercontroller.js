@@ -139,8 +139,16 @@ const teacherController = {
   }),
 
   classStudList: asyncHandler(async (req, res) => {
-    const { id } = req.teacher;
-    console.log("teacher Id ", id);
+    const { id } = req.query;
+     const result = await teacherService.classStudList({
+     teacherid: id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "get all student list of class teacher",
+      data: result,
+    });
   }),
 };
 

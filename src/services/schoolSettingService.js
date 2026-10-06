@@ -863,23 +863,6 @@ const schoolSettingService = {
     return result;
   },
 
-  /*
-   * Class-wise student list for a session.
-   */
-  listEnrollments: async ({ schId, session, classID, sectionId }) => {
-    return await StudentEnrollment.find({
-      schId,
-      session,
-      ...(classID ? { classID } : {}),
-      ...(sectionId ? { sectionId } : {}),
-    })
-      .populate({ path: "studentId", populate: { path: "regno" } })
-      .populate("classID")
-      .populate("sectionId")
-      .sort({ rollNo: 1 })
-      .lean();
-  },
-
   createSubject: async ({ schId, schCode, session, subjects, createdby }) => {
     if (!Array.isArray(subjects) || subjects.length === 0) {
       throw new AppError("subjects array is required", 400);
@@ -954,10 +937,34 @@ const schoolSettingService = {
 
     return await Subject.find(filter)
       .populate("session", "session")
-      .populate("schId", "schName schCode")
-     
+      .populate("schId", "schName schCode");
   },
 
+  getAllEnrollStudent: async ({ schId, session, classID, sectionId }) => {
+    if (!schId || !session || !classID || !sectionId) {
+      throw new AppError(
+        "schId, session, classID and sectionId are required",
+        400,
+      );
+    }
+
+    return await StudentEnrollment.find({
+      schId,
+      session,
+      classID,
+      sectionId,
+    })
+      .populate({
+        path: "studentId",
+        select: "rollNo",
+        populate: {
+          path: "regno",
+          select: "sname dob email whatAppno mob1 mob2 age fname category gender Image mname",
+        },
+      }).select("rollNo")
+      .sort({ rollNo: 1 })
+      .lean();
+  },
 };
 
 module.exports = schoolSettingService;
