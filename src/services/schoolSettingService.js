@@ -959,11 +959,103 @@ const schoolSettingService = {
         select: "rollNo",
         populate: {
           path: "regno",
-          select: "sname dob email whatAppno mob1 mob2 age fname category gender Image mname",
+          select:
+            "sname dob email whatAppno mob1 mob2 age fname category gender Image mname",
         },
-      }).select("rollNo")
+      })
+      .select("rollNo")
       .sort({ rollNo: 1 })
       .lean();
+  },
+
+  updateStudentsRoll: async ({ students }) => {
+    if (!Array.isArray(students) || students.length === 0) {
+      throw new AppError("students array is required", 400);
+    }
+
+    // Check duplicate roll numbers in request itself
+    const rollNumbers = students
+      .map((student) => student.rollNo)
+      .filter(
+        (rollNo) => rollNo !== null && rollNo !== undefined && rollNo !== "",
+      );
+
+    const uniqueRollNumbers = new Set(rollNumbers);
+
+    if (uniqueRollNumbers.size !== rollNumbers.length) {
+      throw new AppError("Duplicate roll numbers are not allowed", 409);
+    }
+
+    // Get all enrollments
+    const enrollmentIds = students.map((student) => student.enrollmentId);
+
+    const enrollments = await StudentEnrollment
+      .find({
+        _id: { $in: enrollmentIds },
+      })
+      .lean();
+
+    if (enrollments.length !== students.length) {
+      throw new AppError("One or more student enrollments were not found", 404);
+    }
+
+    // Check existing roll numbers in the same class-section
+    for (const student of students) {
+      if (
+        student.rollNo === null ||
+        student.rollNo === undefined ||
+        student.rollNo === ""
+      ) {
+        continue;
+      }
+
+      const enrollment = enrollments.find(
+        (item) => String(item._id) === String(student.enrollmentId),
+      );
+
+      if (!enrollment) {
+        throw new AppError(
+          `Enrollment not found: ${student.enrollmentId}`,
+          404,
+        );
+      }
+
+      const duplicate = await StudentEnrollment.findOne({
+        _id: { $nin: enrollmentIds },
+        schId: enrollment.schId,
+        session: enrollment.session,
+        classID: enrollment.classID,
+        sectionId: enrollment.sectionId,
+        rollNo: student.rollNo,
+      });
+
+      if (duplicate) {
+        throw new AppError(
+          `Roll number ${student.rollNo} is already assigned to another student`,
+          409,
+        );
+      }
+    }
+
+    const bulkOperations = students.map((student) => ({
+      updateOne: {
+        filter: {
+          _id: student.enrollmentId,
+        },
+        update: {
+          $set: {
+            rollNo: student.rollNo,
+          },
+        },
+      },
+    }));
+
+    const result = await StudentEnrollment.bulkWrite(bulkOperations);
+
+    return {
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+    };
   },
 };
 

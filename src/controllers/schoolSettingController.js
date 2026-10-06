@@ -377,7 +377,7 @@ const schoolSettingController = {
 
   getAllEnrollStudent: asyncHandler(async (req, res) => {
     const { schId, session, classID, sectionId } = req.query;
-    
+
 
     if (!classID || !sectionId) throw new AppError("classID and sectionId are required", 400);
 
@@ -394,6 +394,27 @@ const schoolSettingController = {
       data: students,
     });
   }),
+
+  updateStudentsRoll: asyncHandler(async (req, res) => {
+  const { students } = req.body;
+
+  if (!Array.isArray(students) || students.length === 0) {
+    throw new AppError(
+      "students array is required",
+      400
+    );
+  }
+
+  const result = await schoolSettingService.updateStudentsRoll({
+    students,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Student roll numbers updated successfully",
+    data: result,
+  });
+}),
 
 };
 

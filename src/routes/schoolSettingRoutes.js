@@ -77,7 +77,11 @@ router.get(
   schoolSettingController.getAllNewRegistration,
 );
 
-router.get('/get-register-studbyid', authMiddleware,schoolSettingController.getRegisterStudentByID )
+router.get(
+  "/get-register-studbyid",
+  authMiddleware,
+  schoolSettingController.getRegisterStudentByID,
+);
 
 // router.post("/stud-admission",authMiddleware, schoolSettingController.admitStudent);
 router.post(
@@ -86,13 +90,26 @@ router.post(
   schoolSettingController.admitStudent,
 );
 
-router.get('/enrolled-studentsOfClass', authMiddleware, schoolSettingController.getAllEnrollStudent)
+router.get(
+  "/enrolled-studentsOfClass",
+  authMiddleware,
+  schoolSettingController.getAllEnrollStudent,
+);
+router.put(
+  "/class-students/update-rollno",
+  authMiddleware,
+  schoolSettingController.updateStudentsRoll,
+);
 
-
-
-router.post('/create-subject',authMiddleware, schoolSettingController.createSubject )
-router.post('/getAll-subject',authMiddleware, schoolSettingController.getSubjects )
-
-
+router.post(
+  "/create-subject",
+  authMiddleware,
+  schoolSettingController.createSubject,
+);
+router.post(
+  "/getAll-subject",
+  authMiddleware,
+  schoolSettingController.getSubjects,
+);
 
 module.exports = router;
