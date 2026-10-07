@@ -161,10 +161,10 @@ module.exports = {
 
   // GET /api/fees/receipts?session=&studentId=&from=&to=
   listReceipts: asyncHandler(async (req, res) => {
-    const { session, studentId, from, to } = req.query;
+    const { session, studentId, from, to,schId } = req.query;
 
     const data = await feeCollectionService.listReceipts({
-      schId: req.user.schId,
+      schId,
       session,
       studentId,
       from,
