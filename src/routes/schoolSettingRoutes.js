@@ -95,6 +95,13 @@ router.get(
   authMiddleware,
   schoolSettingController.getAllEnrollStudent,
 );
+
+router.get(
+  "/enrollment-list",
+  authMiddleware,
+  schoolSettingController.listEnrollments,
+);
+
 router.put(
   "/class-students/update-rollno",
   authMiddleware,
