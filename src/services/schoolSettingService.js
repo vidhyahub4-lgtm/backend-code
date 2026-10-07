@@ -1057,6 +1057,20 @@ const schoolSettingService = {
       modifiedCount: result.modifiedCount,
     };
   },
+
+  listEnrollments: async ({ schId, session, classID, sectionId }) => {
+    return await StudentEnrollment.find({
+      schId,
+      session,
+      ...(classID ? { classID } : {}),
+      ...(sectionId ? { sectionId } : {}),
+    })
+      .populate({ path: "studentId", populate: { path: "regno" } })
+      .populate("classID")
+      .populate("sectionId")
+      .sort({ rollNo: 1 })
+      .lean();
+  },
 };
 
 module.exports = schoolSettingService;

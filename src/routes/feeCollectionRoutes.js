@@ -10,16 +10,16 @@ const validateInstallmentMonth = require("../middileware/validateInstallmentMont
 router.post("/demands/monthly",authMiddleware,validateInstallmentMonth, feeController.generateMonthlyDemands);
 
 // counter screen
-router.get("/students/:studentId/dues", feeController.getStudentDues);
-router.get("/students/:studentId/admission-due", feeController.getAdmissionDues);
-router.get("/students/:studentId/monthly-due", feeController.getMonthlyDues);
+router.get("/students/:studentId/dues", authMiddleware, feeController.getStudentDues);
+router.get("/students/:studentId/admission-due", authMiddleware, feeController.getAdmissionDues);
+router.get("/students/:studentId/monthly-due", authMiddleware, feeController.getMonthlyDues);
 
 // payments
 router.post("/collect",authMiddleware, feeController.collectFee);
 
 // receipts
-router.get("/receipts", feeController.listReceipts);
-router.get("/receipts/:receiptId", feeController.getReceipt);
-router.post("/receipts/:receiptId/cancel", feeController.cancelReceipt);
+router.get("/receipts", authMiddleware, feeController.listReceipts);
+router.get("/receipts/:receiptId", authMiddleware, feeController.getReceipt);
+router.post("/receipts/:receiptId/cancel", authMiddleware, feeController.cancelReceipt);
 
 module.exports = router;
