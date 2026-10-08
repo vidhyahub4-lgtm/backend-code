@@ -69,7 +69,7 @@ const feeReceiptSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["active", "cancelled"],
+      enum: ["active", "cancelled", 'inactive'],
       default: "active",
     },
     cancelledAt: Date,

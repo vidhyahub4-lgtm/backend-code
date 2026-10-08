@@ -64,75 +64,122 @@ module.exports = {
     };
   },
 
-getStudentPaymentDetail: async ({ schId, studentId, session }) => {
-  const paydet = await FeeDemand.find({
-    schId,
-    studentId,
-    session,
-    headType: "monthly",
-  })
-    .select(
-      "_id installmentMonthNo feetype netAmount paidAmount"
-    )
-    .lean();
+  getStudentPaymentDetail: async ({ schId, studentId, session }) => {
+    const paydet = await FeeDemand.find({
+      schId,
+      studentId,
+      session,
+      headType: "monthly",
+    })
+      .select("_id installmentMonthNo feetype netAmount paidAmount")
+      .lean();
 
-  const installments = new Map();
+    const installments = new Map();
 
-  for (const doc of paydet) {
-    console.log('dco : ', doc)
-    const instNo = doc.installmentMonthNo;
+    for (const doc of paydet) {
+      console.log("doc:", doc);
 
-    if (!installments.has(instNo)) {
-      installments.set(instNo, {
+      const instNo = doc.installmentMonthNo;
+
+      if (!installments.has(instNo)) {
+        installments.set(instNo, {
+          // _id: doc._id,
+          instno: instNo,
+          feedet: [],
+          amt: 0,
+          due: 0,
+        });
+      }
+
+      const inst = installments.get(instNo);
+
+      const netAmount = Number(doc.netAmount || 0);
+      const paidAmount = Number(doc.paidAmount || 0);
+
+      const dueAmount = Math.max(netAmount - paidAmount, 0);
+
+      inst.feedet.push({
+        feetype: doc.feetype,
+        amt: netAmount,
         _id: doc._id,
-        instno: instNo,
-        feedet: [],
-        amt: 0,
-        due: 0,
       });
+
+      inst.amt += netAmount;
+      inst.due += dueAmount;
     }
 
-    const inst = installments.get(instNo);
+    const pinst = [];
+    const dinst = [];
 
-    const netAmount = Number(doc.netAmount || 0);
-    const paidAmount = Number(doc.paidAmount || 0);
-    const dueAmount = Math.max(netAmount - paidAmount, 0);
+    // Total due
+    let du = 0;
 
-    // Fee type + amount
-    inst.feedet.push({
-      feetype: doc.feetype,
-      amt: netAmount,
-      _id:doc._id
-    });
-    inst.amt += netAmount;
+    for (const inst of installments.values()) {
+      if (inst.due > 0) {
+        dinst.push({
+          _id: inst._id,
+          instno: inst.instno,
+          feedet: inst.feedet,
+          amt: inst.amt,
+        });
 
-    inst.due += dueAmount;
-  }
-
-  const pinst = [];
-  const dinst = [];
-
-  for (const inst of installments.values()) {
-    if (inst.due > 0) {
-      dinst.push({
-        _id: inst._id,
-        instno: inst.instno,
-        feedet: inst.feedet,
-        amt: inst.amt,
-      });
-    } else {
-      pinst.push({
-        _id: inst._id,
-        instno: inst.instno,
-      });
+        // Add installment due to total due
+        du += inst.due;
+      } else {
+        pinst.push({
+          _id: inst._id,
+          instno: inst.instno,
+        });
+      }
     }
-  }
 
-  return {
-    pinst,
-    dinst,
-  };
-},
+    // Get total advance from active receipts
+    const advanceResult = await FeeReceipt.aggregate([
+      {
+        $match: {
+          schId: new mongoose.Types.ObjectId(schId),
+          studentId: new mongoose.Types.ObjectId(studentId),
+          session: new mongoose.Types.ObjectId(session),
+          status: "active",
+          // advanceAmount: { $gt: 0 },
+        },
+      },
+      {
+        $sort: {
+          paymentDate: -1,
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+
+          // Total advance
+          adv: {
+            $sum: "$advanceAmount",
+          },
+
+          // Latest receipt ID having advance
+          lrcptid: {
+            $first: "$_id",
+          },
+        },
+      },
+    ]);
+
+    console.log("last receipt:", advanceResult);
+
+    const adv = Number(advanceResult[0]?.adv || 0);
+    const lrcptid = advanceResult[0]?.lrcptid || null;
+
+    return {
+      pinst,
+      dinst,
+      adv,
+      du,
+      lrcptid,
+    };
+  },
 
   getAdmissionDues: async ({ schId, studentId, session }) => {
     const demands = await FeeDemand.find({
