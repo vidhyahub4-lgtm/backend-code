@@ -212,8 +212,6 @@ module.exports = {
       status: "active",
       classID: { $in: classIds },
     }).lean();
-
-    console.log('enrollnbnt stud : ',enrollments)
  
     const installmentByClass = new Map(
       resolvedInstallments.map((r) => [r.classID.toString(), r]),

@@ -16,6 +16,7 @@ const userService = {
     password,
     userType,
     image,
+    schid,
   }) => {
     const existingUsername = await User.findOne({ loginUserName });
 
@@ -23,16 +24,17 @@ const userService = {
       throw new AppError("Username already exists", 409);
     }
 
-    // Check if email already exists
     const existingEmail = await User.findOne({ email });
-
     if (existingEmail) {
       throw new AppError("Email already exists", 409);
     }
 
+    if (userType == "admin" && !schid) {
+      throw new AppError("School is required for admin users", 400);
+    }
+
     const hashpassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await User.create({
       firstname,
       lastname,
@@ -42,6 +44,7 @@ const userService = {
       password: hashpassword,
       userType,
       image: image || "",
+      schid: schid || null,
     });
 
     return user;
@@ -53,20 +56,27 @@ const userService = {
         ...(loginUserName ? [{ loginUserName }] : []),
         ...(email ? [{ email }] : []),
       ],
+    }).populate({
+      path: "schid",
+      select: "_id schName  schLogo",
     });
 
     if (!user) {
       throw new AppError("Invalid username/email or password", 401);
     }
 
-    // Compare password
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       throw new AppError("Invalid username/email or password", 401);
     }
 
-    // Don't return password to controller/client
+    let accessToken = await generateAccessToken(user._id, user.userType);
+    let refreshToken = await generateRefreshToken(user._id, user.userType);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+    console.log('user found : ', user)
     const userData = {
       id: user._id,
       firstname: user.firstname,
@@ -76,18 +86,17 @@ const userService = {
       phoneno: user.phoneno,
       userType: user.userType,
       image: user.image,
+
+      sch: user.schid
+        ? {
+            schid: user.schid._id,
+            schoolName: user.schid.schName,
+            schoolLogo: user.schid.schLogo,
+          }
+        : null,
     };
 
-    let accessToken = await generateAccessToken(user._id, user.userType);
-    let refreshToken = await generateRefreshToken(user._id, user.userType);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    const userObject = user.toObject();
-    delete userObject.refreshToken;
-
-    let sidebar;
+    let sidebar = [];
 
     if (user.userType === "superAdmin") {
       sidebar = await Sidebar.find({

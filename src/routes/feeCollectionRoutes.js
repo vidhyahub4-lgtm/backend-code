@@ -9,6 +9,9 @@ const validateInstallmentMonth = require("../middileware/validateInstallmentMont
 // demands
 router.post("/demands/monthly",authMiddleware,validateInstallmentMonth, feeController.generateMonthlyDemands);
 
+//get student monthly payment detail and due
+router.get("/students/payment-detail-monthly", feeController.getStudentPaymentDetail);
+
 // counter screen
 router.get("/students/:studentId/dues", feeController.getStudentDues);
 router.get("/students/:studentId/admission-due", feeController.getAdmissionDues);

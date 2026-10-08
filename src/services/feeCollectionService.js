@@ -64,6 +64,76 @@ module.exports = {
     };
   },
 
+getStudentPaymentDetail: async ({ schId, studentId, session }) => {
+  const paydet = await FeeDemand.find({
+    schId,
+    studentId,
+    session,
+    headType: "monthly",
+  })
+    .select(
+      "_id installmentMonthNo feetype netAmount paidAmount"
+    )
+    .lean();
+
+  const installments = new Map();
+
+  for (const doc of paydet) {
+    console.log('dco : ', doc)
+    const instNo = doc.installmentMonthNo;
+
+    if (!installments.has(instNo)) {
+      installments.set(instNo, {
+        _id: doc._id,
+        instno: instNo,
+        feedet: [],
+        amt: 0,
+        due: 0,
+      });
+    }
+
+    const inst = installments.get(instNo);
+
+    const netAmount = Number(doc.netAmount || 0);
+    const paidAmount = Number(doc.paidAmount || 0);
+    const dueAmount = Math.max(netAmount - paidAmount, 0);
+
+    // Fee type + amount
+    inst.feedet.push({
+      feetype: doc.feetype,
+      amt: netAmount,
+      _id:doc._id
+    });
+    inst.amt += netAmount;
+
+    inst.due += dueAmount;
+  }
+
+  const pinst = [];
+  const dinst = [];
+
+  for (const inst of installments.values()) {
+    if (inst.due > 0) {
+      dinst.push({
+        _id: inst._id,
+        instno: inst.instno,
+        feedet: inst.feedet,
+        amt: inst.amt,
+      });
+    } else {
+      pinst.push({
+        _id: inst._id,
+        instno: inst.instno,
+      });
+    }
+  }
+
+  return {
+    pinst,
+    dinst,
+  };
+},
+
   getAdmissionDues: async ({ schId, studentId, session }) => {
     const demands = await FeeDemand.find({
       schId,

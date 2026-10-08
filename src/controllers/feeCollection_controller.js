@@ -67,6 +67,17 @@ module.exports = {
     res.status(200).json({ success: true, data });
   }),
 
+  getStudentPaymentDetail: asyncHandler(async (req, res) => {
+    const { session,schId,studentId } = req.query;
+    if (!studentId) throw new AppError("studentId is required", 400);
+    const result = await feeCollectionService.getStudentPaymentDetail({
+      schId,
+      studentId,
+      session,
+    });
+    res.status(200).json({ success: true, data: result });
+  }),
+
 
   // GET /api/fees/students/:studentId/admission-due?session=
   getAdmissionDues: asyncHandler(async (req, res) => {

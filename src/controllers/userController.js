@@ -13,6 +13,7 @@ const userController = {
       password,
       userType,
       image,
+      schid
     } = req.body;
 
     if (!email || !password || !phoneno) {
@@ -28,6 +29,7 @@ const userController = {
       password,
       userType,
       image, // optional
+      schid
     });
 
     res.status(201).json({

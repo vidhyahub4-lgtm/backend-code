@@ -49,6 +49,11 @@ const userModel = new mongoose.Schema(
       type: String,
       default: "",
     },
+    schid: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "School",
+      default: null,
+    },
     refreshToken:{type: String}
   },
   {
