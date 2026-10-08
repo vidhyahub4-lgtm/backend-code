@@ -174,6 +174,18 @@ const teacherService = {
 
     await teacher.save();
 
+    // Attendance checks this collection (see attendanceservice.assertIsClassTeacher)
+    await ClassTeacherAssignment.updateOne(
+      {
+        schId,
+        session: String(session),
+        class: String(classID),
+        section: String(sectionID),
+      },
+      { $set: { teacher: teacher._id } },
+      { upsert: true },
+    );
+
     return teacher;
   },
   getClassTeacher: async ({ schId, session, classID, sectionID }) => {
