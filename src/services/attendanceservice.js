@@ -64,10 +64,15 @@ async function getAttendanceByDate({ schId, session, class: cls, section, date }
   const day = new Date(date);
   day.setHours(0, 0, 0, 0);
 
-  return Attendance.find({ schId, session, class: cls, section, date: day }).populate(
-    "student",
-    "name rollno"
-  );
+  return Attendance.find({ schId, session, class: cls, section, date: day }).populate({
+    path: "student",
+    select: "rollNo studentId",
+    populate: {
+      path: "studentId",
+      select: "admno regno",
+      populate: { path: "regno", select: "sname" },
+    },
+  });
 }
 
 module.exports = { markAttendance, getAttendanceByDate, assertIsClassTeacher };

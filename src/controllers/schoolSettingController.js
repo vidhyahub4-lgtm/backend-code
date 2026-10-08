@@ -395,6 +395,22 @@ const schoolSettingController = {
     });
   }),
 
+  listEnrollments: asyncHandler(async (req, res) => {
+    const { schId, session, classID, sectionId } = req.query;
+
+    if (!schId) throw new AppError("schId is required", 400);
+    if (!session) throw new AppError("session is required", 400);
+
+    const data = await schoolSettingService.listEnrollments({
+      schId,
+      session,
+      classID,
+      sectionId,
+    });
+
+    res.status(200).json({ success: true, count: data.length, data });
+  }),
+
   updateStudentsRoll: asyncHandler(async (req, res) => {
   const { students } = req.body;
 

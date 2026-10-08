@@ -144,13 +144,16 @@ module.exports = {
     });
   }),
 
-  // POST /api/fees/receipts/:receiptId/cancel
+  // POST /api/fees/receipts/:receiptId/cancel   body: { schId, reason }
   cancelReceipt: asyncHandler(async (req, res) => {
+    const { schId, reason } = req.body;
+    if (!schId) throw new AppError("schId is required", 400);
+
     const data = await feeCollectionService.cancelReceipt({
-      schId: req.user.schId,
+      schId,
       userId: req.user._id,
       receiptId: req.params.receiptId,
-      reason: req.body.reason,
+      reason,
     });
 
     res.status(200).json({
@@ -160,10 +163,13 @@ module.exports = {
     });
   }),
 
-  // GET /api/fees/receipts/:receiptId
+  // GET /api/fees/receipts/:receiptId?schId=
   getReceipt: asyncHandler(async (req, res) => {
+    const { schId } = req.query;
+    if (!schId) throw new AppError("schId is required", 400);
+
     const data = await feeCollectionService.getReceipt({
-      schId: req.user.schId,
+      schId,
       receiptId: req.params.receiptId,
     });
 
