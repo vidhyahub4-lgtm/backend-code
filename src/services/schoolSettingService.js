@@ -172,8 +172,9 @@ const schoolSettingService = {
     return schHouse;
   },
 
-  getSchHouse: async () => {
-    return await SchHouse.find().sort({ createdAt: -1 });
+  getSchHouse: async (schId) => {
+    const filter = schId ? { schId } : {};
+    return await SchHouse.find(filter).sort({ createdAt: -1 });
   },
   // createFeePlanSetup: async (data) => {
   //   const { headType, session, classes, schId, userId } = data;

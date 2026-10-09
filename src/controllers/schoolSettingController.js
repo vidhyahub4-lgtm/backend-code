@@ -64,10 +64,11 @@ const schoolSettingController = {
   }),
 
   getSchHouse: asyncHandler(async (req, res) => {
-    const result = await schoolSettingService.getSchHouse();
+    const result = await schoolSettingService.getSchHouse(req.query.schId);
     res.status(200).json({
       success: true,
       message: "School House fetched successfully",
+      schHouse: result,
       schClasses: result,
     });
   }),

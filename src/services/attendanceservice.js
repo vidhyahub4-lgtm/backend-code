@@ -1,5 +1,6 @@
 const Attendance = require("../models/teacher/attendance");
 const ClassTeacherAssignment = require("../models/teacher/classteacherassign");
+const StudentEnrollment = require("../models/school-setting/Studentenrollment");
 
 const { STATUSES } = Attendance;
 
@@ -55,7 +56,14 @@ async function markAttendance({ schId, session, class: cls, section, date, recor
       remark: r.remark || "",
     });
   }
-  const cleaned = [...byStudent.values()];
+  const enrollments = await StudentEnrollment.find({ _id: { $in: [...byStudent.keys()] } })
+    .select("rollNo")
+    .lean();
+  const rollMap = new Map(enrollments.map((e) => [String(e._id), e.rollNo ?? 0]));
+  const cleaned = [...byStudent.values()].map((r) => ({
+    ...r,
+    rollNo: rollMap.get(String(r.student)) ?? 0,
+  }));
 
   const day = startOfDay(date);
 
@@ -96,6 +104,7 @@ async function getAttendanceByDate({ schId, session, class: cls, section, date }
     student: r.student,
     status: r.status,
     remark: r.remark,
+    rollNo: r.rollNo,
   }));
 }
 

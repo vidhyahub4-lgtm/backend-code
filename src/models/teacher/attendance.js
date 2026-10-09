@@ -13,6 +13,7 @@ const recordSchema = new Schema(
       required: true,
     },
     status: { type: String, enum: STATUSES, required: true },
+    rollNo: { type: Number, default: 0 },
     remark: { type: String, default: "", trim: true },
   },
   { _id: false }

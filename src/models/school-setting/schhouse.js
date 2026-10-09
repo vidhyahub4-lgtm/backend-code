@@ -5,7 +5,7 @@ const schHouseSchema = new mongoose.Schema(
     house: [{
       type: String,
       required: true,
-      unique: true,
+      // unique: true,
       trim: true,
     }],
     schId: {

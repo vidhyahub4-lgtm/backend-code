@@ -73,7 +73,6 @@ const newRegistrationSchema = new mongoose.Schema(
     // Language & Personal Details
     mothertongue: {
       type: String,
-      required: true,
       trim: true,
     },
 
@@ -91,7 +90,6 @@ const newRegistrationSchema = new mongoose.Schema(
 
     religion: {
       type: String,
-      required: true,
       trim: true,
     },
 
