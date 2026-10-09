@@ -58,7 +58,7 @@ const userService = {
       ],
     }).populate({
       path: "schid",
-      select: "_id schName  schLogo",
+      select: "_id schName  schLogo schoolCode",
     });
 
     if (!user) {
@@ -92,6 +92,7 @@ const userService = {
             schid: user.schid._id,
             schoolName: user.schid.schName,
             schoolLogo: user.schid.schLogo,
+            schoolCode: user.schid.schoolCode,
           }
         : null,
     };

@@ -1,6 +1,8 @@
 const Attendance = require("../models/teacher/attendance");
 const ClassTeacherAssignment = require("../models/teacher/classteacherassign");
 
+const { STATUSES } = Attendance;
+
 /** Confirms `teacherId` is the class teacher of class-section for this session */
 async function assertIsClassTeacher({ schId, session, class: cls, section, teacherId }) {
   const assignment = await ClassTeacherAssignment.findOne({
@@ -25,47 +27,60 @@ async function assertIsClassTeacher({ schId, session, class: cls, section, teach
   return assignment;
 }
 
+function startOfDay(date) {
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
 /**
- * Mark attendance for a whole class-section on a date in one call.
- * records: [{ student, status, remark }]
+ * Mark attendance for a whole class-section on a date in ONE write.
+ * records: [{ student, status, remark }]  (student = StudentEnrollment _id)
+ * The list REPLACES that day's records, so send every student of the class.
  */
 async function markAttendance({ schId, session, class: cls, section, date, records, teacherId }) {
   await assertIsClassTeacher({ schId, session, class: cls, section, teacherId });
 
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
+  // Validate and de-duplicate by student (the last entry for a student wins).
+  const byStudent = new Map();
+  for (const r of records) {
+    if (!r || !r.student || !STATUSES.includes(r.status)) {
+      const err = new Error(`Each record needs a student and a status (${STATUSES.join(", ")})`);
+      err.status = 400;
+      throw err;
+    }
+    byStudent.set(String(r.student), {
+      student: r.student,
+      status: r.status,
+      remark: r.remark || "",
+    });
+  }
+  const cleaned = [...byStudent.values()];
 
-  const ops = records.map((r) => ({
-    updateOne: {
-      filter: {
-        schId,
-        session,
-        class: cls,
-        section,
-        date: day,
-        student: r.student,
-      },
-      update: {
-        $set: {
-          status: r.status,
-          remark: r.remark || "",
-          markedBy: teacherId,
-        },
-      },
-      upsert: true,
-    },
-  }));
+  const day = startOfDay(date);
 
-  const result = await Attendance.bulkWrite(ops);
-  return result;
+  await Attendance.findOneAndUpdate(
+    { schId, session, class: cls, section, date: day },
+    { $set: { records: cleaned, markedBy: teacherId } },
+    { upsert: true, runValidators: true, setDefaultsOnInsert: true }
+  );
+
+  return { date: day, total: cleaned.length };
 }
 
+/**
+ * Returns a flat list ({ _id, student, status, remark }), one entry per
+ * student, so callers don't need to know about the one-document-per-day layout.
+ */
 async function getAttendanceByDate({ schId, session, class: cls, section, date }) {
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-
-  return Attendance.find({ schId, session, class: cls, section, date: day }).populate({
-    path: "student",
+  const doc = await Attendance.findOne({
+    schId,
+    session,
+    class: cls,
+    section,
+    date: startOfDay(date),
+  }).populate({
+    path: "records.student",
     select: "rollNo studentId",
     populate: {
       path: "studentId",
@@ -73,6 +88,15 @@ async function getAttendanceByDate({ schId, session, class: cls, section, date }
       populate: { path: "regno", select: "sname" },
     },
   });
+
+  if (!doc) return [];
+
+  return doc.records.map((r) => ({
+    _id: String(r.student?._id ?? r.student),
+    student: r.student,
+    status: r.status,
+    remark: r.remark,
+  }));
 }
 
 module.exports = { markAttendance, getAttendanceByDate, assertIsClassTeacher };
