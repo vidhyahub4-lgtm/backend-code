@@ -115,9 +115,9 @@ module.exports = asyncHandler(async (req, res, next) => {
     );
 
     throw new AppError(
-      `Month ${monthNo} is not configured in the fee setup for this school. ` +
-        `Ask the admin to add it in SchoolPayModeSetup first.`,
-      404,
+      `Nothing was generated. These instalments are not set up: ${parts.join("; ")}. ` +
+        `Ask the admin to add them in Class PayMode Setup first.`,
+      400,
     );
   }
 
