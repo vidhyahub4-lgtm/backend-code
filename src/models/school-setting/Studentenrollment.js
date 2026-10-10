@@ -39,6 +39,8 @@ const studentEnrollmentSchema = new mongoose.Schema(
 
     rollNo: { type: Number, min: 0, default:0 },
 
+    house: { type: String, trim: true, default: "" },
+
     status: {
       type: String,
       enum: ["active", "promoted", "left"],

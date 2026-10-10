@@ -957,16 +957,117 @@ const schoolSettingService = {
     })
       .populate({
         path: "studentId",
-        select: "rollNo",
+        select: "rollNo admno",
         populate: {
           path: "regno",
           select:
-            "sname dob email whatAppno mob1 mob2 age fname category gender Image mname",
+            "regno sname fname mname gname dob age gender category nationality religion mothertongue secLang adharId penno mob1 mob2 whatAppno email lclass lsch lper lboard Image",
         },
       })
-      .select("rollNo")
+      .select("rollNo house")
       .sort({ rollNo: 1 })
       .lean();
+  },
+
+    updateStudentsHouse: async ({ schId, students }) => {
+    if (!schId) throw new AppError("schId is required", 400);
+    if (!Array.isArray(students) || students.length === 0) {
+      throw new AppError("students array is required", 400);
+    }
+
+    const schHouse = await SchHouse.findOne({ schId }).lean();
+    const allowed = new Set(schHouse?.house || []);
+
+    const ops = students.map((s) => {
+      if (!mongoose.isValidObjectId(s.enrollmentId)) {
+        throw new AppError("Invalid enrollmentId", 400);
+      }
+      const house = typeof s.house === "string" ? s.house.trim() : "";
+      if (house && !allowed.has(house)) {
+        throw new AppError(`House "${house}" does not exist for this school`, 400);
+      }
+      return {
+        updateOne: {
+          filter: { _id: s.enrollmentId, schId },
+          update: { $set: { house } },
+        },
+      };
+    });
+
+    const found = await StudentEnrollment.countDocuments({
+      _id: { $in: students.map((s) => s.enrollmentId) },
+      schId,
+    });
+    if (found !== students.length) {
+      throw new AppError("One or more student enrollments were not found", 404);
+    }
+
+    const result = await StudentEnrollment.bulkWrite(ops);
+    return { updated: result.modifiedCount };
+  },
+
+  updateStudentRegistration: async ({ regId, schId, body, image }) => {
+    if (!mongoose.isValidObjectId(regId)) throw new AppError("Invalid student id", 400);
+    if (!schId) throw new AppError("schId is required", 400);
+
+    const REQUIRED = ["sname", "fname", "mname", "gname", "gender", "category", "nationality", "mob1", "whatAppno"];
+    const OPTIONAL = ["mothertongue", "secLang", "religion", "penno", "mob2", "adharId", "email", "lclass", "lsch", "lboard"];
+    const set = {};
+    const unset = {};
+
+    for (const key of REQUIRED) {
+      if (body[key] === undefined) continue;
+      const value = String(body[key]).trim();
+      if (!value) throw new AppError(`${key} cannot be empty`, 400);
+      set[key] = value;
+    }
+    for (const key of OPTIONAL) {
+      if (body[key] === undefined) continue;
+      const value = String(body[key]).trim();
+      if (value) set[key] = value;
+      else unset[key] = "";
+    }
+    if (body.age !== undefined) {
+      const age = Number(body.age);
+      if (!Number.isInteger(age) || age < 1) {
+        throw new AppError("age must be a whole number of 1 or more", 400);
+      }
+      set.age = age;
+    }
+    if (body.lper !== undefined) {
+      if (String(body.lper).trim() === "") unset.lper = "";
+      else {
+        const lper = Number(body.lper);
+        if (Number.isNaN(lper) || lper < 0 || lper > 100) {
+          throw new AppError("lper must be between 0 and 100", 400);
+        }
+        set.lper = lper;
+      }
+    }
+    if (body.dob !== undefined) {
+      if (String(body.dob).trim() === "") unset.dob = "";
+      else {
+        const dob = new Date(body.dob);
+        if (Number.isNaN(dob.getTime())) throw new AppError("dob is invalid", 400);
+        set.dob = dob;
+      }
+    }
+    if (image) set.Image = image;
+
+    const update = {};
+    if (Object.keys(set).length) update.$set = set;
+    if (Object.keys(unset).length) update.$unset = unset;
+    if (!Object.keys(update).length) throw new AppError("Nothing to update", 400);
+
+    const updated = await NewStudentRegistration.findOneAndUpdate(
+      { _id: regId, schId },
+      update,
+      { new: true, runValidators: true },
+    )
+      .select("-__v")
+      .lean();
+    if (!updated) throw new AppError("Student not found", 404);
+    return updated;
   },
 
   updateStudentsRoll: async ({ students }) => {

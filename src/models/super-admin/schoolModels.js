@@ -67,11 +67,11 @@ const schoolSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    admin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    // admin: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "User",
+    //   required: true,
+    // },
 
     selectBoard: {
       type: mongoose.Schema.Types.ObjectId,

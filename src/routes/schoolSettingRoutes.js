@@ -108,6 +108,19 @@ router.put(
   schoolSettingController.updateStudentsRoll,
 );
 
+router.put(
+  "/class-students/update-house",
+  authMiddleware,
+  schoolSettingController.updateStudentsHouse,
+);
+
+router.put(
+  "/update-student/:regId",
+  authMiddleware,
+  uploadStudentImage.single("Image"),
+  schoolSettingController.updateStudentRegistration,
+);
+
 router.post(
   "/create-subject",
   authMiddleware,

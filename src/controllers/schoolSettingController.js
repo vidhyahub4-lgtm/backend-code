@@ -433,6 +433,30 @@ const schoolSettingController = {
   });
 }),
 
+  updateStudentsHouse: asyncHandler(async (req, res) => {
+    const { schId, students } = req.body;
+    const data = await schoolSettingService.updateStudentsHouse({ schId, students });
+    return res.status(200).json({
+      success: true,
+      message: "Student houses updated successfully",
+      data,
+    });
+  }),
+
+  updateStudentRegistration: asyncHandler(async (req, res) => {
+    const data = await schoolSettingService.updateStudentRegistration({
+      regId: req.params.regId,
+      schId: req.body.schId,
+      body: req.body,
+      image: req.file ? req.file.filename : "",
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Student details updated successfully",
+      data,
+    });
+  }),
+
 };
 
 module.exports = schoolSettingController;
