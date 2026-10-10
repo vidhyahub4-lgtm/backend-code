@@ -1,5 +1,6 @@
 const SchoolPayModeSetup = require("../models/super-admin/SchoolPayModeSetup");
 const DevSuperSession = require("../models/dev_super/session"); // adjust path
+const Class = require("../models/super-admin/class");
 const AppError = require("../utils/appError");
 // const catchAsync = require("../utils/catchAsync");
 const asyncHandler = require("../errorHandlers/asyncHandler");
@@ -18,15 +19,24 @@ const asyncHandler = require("../errorHandlers/asyncHandler");
  */
 module.exports = asyncHandler(async (req, res, next) => {
   // const  = req.user.schId; // never trust req.body.schId
-  const { session, installmentMonthNo, classID,schId } = req.body;
+  const { session, installmentMonthNo, installmentMonthNos, classID, schId } =
+    req.body;
 
-  if (!session || installmentMonthNo === undefined || installmentMonthNo === null) {
-    throw new AppError("session and installmentMonthNo are required", 400);
+  // accept a list of months; a single `installmentMonthNo` still works
+  const rawMonths =
+    Array.isArray(installmentMonthNos) && installmentMonthNos.length > 0
+      ? installmentMonthNos
+      : installmentMonthNo !== undefined && installmentMonthNo !== null
+        ? [installmentMonthNo]
+        : [];
+
+  if (!session || rawMonths.length === 0) {
+    throw new AppError("session and installmentMonthNos are required", 400);
   }
 
-  const monthNo = Number(installmentMonthNo);
-  if (!Number.isInteger(monthNo)) {
-    throw new AppError("installmentMonthNo must be a whole number", 400);
+  const monthNos = [...new Set(rawMonths.map(Number))];
+  if (monthNos.some((n) => !Number.isInteger(n))) {
+    throw new AppError("installmentMonthNos must be whole numbers", 400);
   }
 
   // SchoolPayModeSetup.session is a string ("2026-27"); the rest of the
@@ -56,27 +66,54 @@ module.exports = asyncHandler(async (req, res, next) => {
     : payModeSetup.feeStructure;
 
   if (classID && !structures.length) {
-    throw new AppError("This class has no instalment setup for this session", 404);
+    throw new AppError(
+      "This class has no instalment setup for this session",
+      404,
+    );
   }
 
-  const resolvedInstallments = []; // classes that DO have this month
-  const missingClasses = [];       // classes configured, but not for this month
+  const resolvedInstallments = []; // one entry per class per selected month
+  const missing = []; // { classId, monthNo } that are NOT configured
+  const labelByNo = new Map(); // monthNo -> "January" (for the error message)
 
   structures.forEach((fs) => {
-    const inst = (fs.installment || []).find((i) => i.id === monthNo);
-    if (inst) {
-      resolvedInstallments.push({
-        classID: fs.class,
-        installmentMonthId: inst._id,   // real ObjectId, resolved server-side
-        installmentMonthNo: inst.id,
-        installmentLabel: inst.installment, // e.g. "January"
-      });
-    } else {
-      missingClasses.push(fs.class.toString());
-    }
+    monthNos.forEach((monthNo) => {
+      const inst = (fs.installment || []).find((i) => i.id === monthNo);
+      if (inst) {
+        labelByNo.set(inst.id, inst.installment);
+        resolvedInstallments.push({
+          classID: fs.class,
+          installmentMonthId: inst._id, // real ObjectId, resolved server-side
+          installmentMonthNo: inst.id,
+          installmentLabel: inst.installment, // e.g. "January"
+        });
+      } else {
+        missing.push({ classId: fs.class.toString(), monthNo });
+      }
+    });
   });
 
-  if (!resolvedInstallments.length) {
+  // All-or-nothing: if any selected month is missing for any class in scope,
+  // generate nothing and tell the user exactly what is missing.
+  if (missing.length > 0) {
+    const classDocs = await Class.find({
+      _id: { $in: [...new Set(missing.map((m) => m.classId))] },
+    })
+      .select("className")
+      .lean();
+    const nameById = new Map(
+      classDocs.map((c) => [String(c._id), c.className]),
+    );
+    const byClass = new Map();
+    missing.forEach(({ classId, monthNo }) => {
+      if (!byClass.has(classId)) byClass.set(classId, []);
+      byClass.get(classId).push(labelByNo.get(monthNo) || `Month ${monthNo}`);
+    });
+    const parts = [...byClass].map(
+      ([classId, months]) =>
+        `Class ${nameById.get(classId) || classId}: ${months.join(", ")}`,
+    );
+
     throw new AppError(
       `Month ${monthNo} is not configured in the fee setup for this school. ` +
         `Ask the admin to add it in SchoolPayModeSetup first.`,
@@ -89,9 +126,9 @@ module.exports = asyncHandler(async (req, res, next) => {
     schId,
     session,
     sessionName,
-    installmentMonthNo: monthNo,
+    installmentMonthNos: monthNos,
     resolvedInstallments,
-    missingClasses,
+    missingClasses: [], // kept so the controller response shape is unchanged
   };
 
   next();

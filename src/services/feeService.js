@@ -9,10 +9,9 @@ const AppError = require("../utils/appError");
  * and never overwrites a demand that already has payments.
  */
 
-
 const findPlanClass = (feePlan, classID) =>
   feePlan.classes.find((c) => c.classID.toString() === String(classID));
- 
+
 const buildDemandOps = ({
   schId,
   session,
@@ -51,8 +50,6 @@ const buildDemandOps = ({
       upsert: true,
     },
   }));
- 
-
 
 module.exports = {
   /*
@@ -192,49 +189,52 @@ module.exports = {
     schId,
     session,
     userId,
-    resolvedInstallments, // [{ classID, installmentMonthId, installmentMonthNo }]
+    resolvedInstallments, // [{ classID, installmentMonthId, installmentMonthNo, installmentLabel }] one per class per month
   }) => {
     const feePlan = await FeePlanSetup.findOne({
       schId,
       session,
       headType: "monthly",
     }).lean();
- 
+
     if (!feePlan) {
       throw new AppError("Monthly fee plan is not set up for this session", 404);
     }
- 
-    const classIds = resolvedInstallments.map((r) => r.classID);
- 
+
+    const classIds = [...new Set(resolvedInstallments.map((r) => r.classID.toString()))];
+
     const enrollments = await StudentEnrollment.find({
       schId,
       session,
       status: "active",
       classID: { $in: classIds },
     }).lean();
- 
-    const installmentByClass = new Map(
-      resolvedInstallments.map((r) => [r.classID.toString(), r]),
-    );
- 
+
+    // classId -> every selected instalment of that class
+    const installmentsByClass = new Map();
+    for (const r of resolvedInstallments) {
+      const key = r.classID.toString();
+      if (!installmentsByClass.has(key)) installmentsByClass.set(key, []);
+      installmentsByClass.get(key).push(r);
+    }
+
     let skippedNoFeePlan = 0;
     const skippedClasses = new Set();
     const ops = [];
- 
+    const opMonth = []; // opMonth[i] = month number of ops[i] (to count created per month)
+
     for (const en of enrollments) {
       const classId = en.classID.toString();
- 
+
       const planClass = findPlanClass(feePlan, en.classID);
       if (!planClass) {
         skippedNoFeePlan++;
         skippedClasses.add(classId);
         continue;
       }
- 
-      const inst = installmentByClass.get(classId);
- 
-      ops.push(
-        ...buildDemandOps({
+
+      for (const inst of installmentsByClass.get(classId) || []) {
+        const built = buildDemandOps({
           schId,
           session,
           studentId: en.studentId,
@@ -245,33 +245,50 @@ module.exports = {
           installmentMonthId: inst.installmentMonthId,
           installmentMonthNo: inst.installmentMonthNo,
           userId,
-        }),
-      );
+        });
+        built.forEach((op) => {
+          ops.push(op);
+          opMonth.push(inst.installmentMonthNo);
+        });
+      }
     }
- 
+
+    const labelByNo = new Map(
+      resolvedInstallments.map((r) => [r.installmentMonthNo, r.installmentLabel]),
+    );
+    const summarize = (upsertedIds = {}) => {
+      const createdByMonth = new Map();
+      Object.keys(upsertedIds).forEach((idx) => {
+        const no = opMonth[Number(idx)];
+        createdByMonth.set(no, (createdByMonth.get(no) || 0) + 1);
+      });
+      return [...labelByNo.keys()]
+        .sort((a, b) => a - b)
+        .map((no) => ({
+          monthNo: no,
+          label: labelByNo.get(no),
+          created: createdByMonth.get(no) || 0,
+        }));
+    };
+
     if (!ops.length) {
       return {
         students: enrollments.length,
         created: 0,
         skippedNoFeePlan,
         skippedClasses: [...skippedClasses],
+        months: summarize(),
       };
     }
 
-    console.log('ops : ', ops)
- 
     const result = await FeeDemand.bulkWrite(ops, { ordered: false });
-    console.log("bulkWrite result:", JSON.stringify(result, null, 2));
- 
+
     return {
       students: enrollments.length,
       created: result.upsertedCount, // rows that did not exist before
-      skippedNoFeePlan, // class missing from the monthly FeePlanSetup
+      skippedNoFeePlan, // students whose class is missing from the monthly FeePlanSetup
       skippedClasses: [...skippedClasses],
+      months: summarize(result.upsertedIds),
     };
-  }
-
- 
-
- 
+  },
 };
