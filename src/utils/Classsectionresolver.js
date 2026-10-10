@@ -1,16 +1,14 @@
 /**
  * classSectionResolver
- * The ONLY place that knows how your Class / Section data is stored.
+ * The ONLY place that knows how Class / Section data is stored.
  * Calendar code just asks "which class-sections?" and gets back [{ clsid, secid }].
  *
- * ASSUMPTION (adjust to your schema): a Class document belongs to a school and
- * holds its sections embedded:
- *     Class = { _id, schId, name, sections: [{ _id, name }] }
- *
- * If your sections live in their own collection (Section = { _id, schId, clsid, name }),
- * only the three queries below change — see the "separate Section model" notes.
+ * Real schema (models/school-setting/schoolClass.js): ONE SchClass document per class per school:
+ *   { schoolID, classID (master Class _id), sectionID: [master Section _id, ...], schCode }
+ * clsid  = master Class _id   (same id the students / enrollments use as classID)
+ * secid  = master Section _id
  */
-const Class = require("../models/school-setting/schoolClass"); // <- point this at your real Class model
+const SchClass = require("../models/school-setting/schoolClass");
 
 function fail(message, status = 400) {
   const err = new Error(message);
@@ -18,24 +16,23 @@ function fail(message, status = 400) {
   throw err;
 }
 
-const toTargets = (cls) =>
-  (cls.sections || []).map((s) => ({ clsid: cls._id, secid: s._id }));
+const toTargets = (doc) =>
+  (doc.sectionID || []).map((secid) => ({ clsid: doc.classID, secid }));
 
 /** Every section of every class in the school */
 async function getAllTargets({ schId }) {
-  const classes = await Class.find({ schId }).select("sections._id").lean();
-  // separate Section model: const secs = await Section.find({ schId }).select("clsid").lean();
-  //                         return secs.map((s) => ({ clsid: s.clsid, secid: s._id }));
-  return classes.flatMap(toTargets);
+  const docs = await SchClass.find({ schoolID: schId }).select("classID sectionID").lean();
+  return docs.flatMap(toTargets);
 }
 
 /** Every section of ONE class */
 async function getClassTargets({ schId, clsid }) {
-  const cls = await Class.findOne({ _id: clsid, schId }).select("sections._id").lean();
-  if (!cls) fail("Class not found in this school", 404);
-  const targets = toTargets(cls);
+  const doc = await SchClass.findOne({ schoolID: schId, classID: clsid })
+    .select("classID sectionID")
+    .lean();
+  if (!doc) fail("Class not found in this school", 404);
+  const targets = toTargets(doc);
   if (targets.length === 0) fail("This class has no sections", 404);
-  // separate Section model: Section.find({ schId, clsid }).select("_id").lean()
   return targets;
 }
 
