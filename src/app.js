@@ -27,6 +27,7 @@ app.use('/super-admin', require('./routes/superAdminRoutes'));
 app.use('/user', require('./routes/userRoutes') )
 app.use('/school-settings', require('./routes/schoolSettingRoutes') )
 app.use("/api/fees", require("./routes/feeCollectionRoutes"));
+app.use("/api/calendar", require("./routes/calendarRoutes"))
 
 
 app.use("/api/teachers", require("./routes/teacherRoute"));
