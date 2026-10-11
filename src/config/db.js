@@ -6,7 +6,7 @@ module.exports = async () => {
     console.log(("🔄 Connecting to MongoDB..."));
   
 
-    const conn = await mongoose.connect(`${process.env.mongoDbUrl}`);
+    const conn = await mongoose.connect('mongodb+srv://vidhyahub4_db_user:ve6PMQooGxJbHd5B@cluster0.gjqq2fo.mongodb.net/product_1');
 
     console.log(`✅ MongoDB Connected`);
 
