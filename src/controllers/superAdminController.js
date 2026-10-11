@@ -234,7 +234,7 @@ const superAdminController = {
       contact1,
       contact2,
       schemail,
-      admin,
+      // admin,
       selectBoard,
       instituteType,
       session
@@ -253,7 +253,7 @@ const superAdminController = {
       !cityId ||
       !stateId ||
       !schoolCode ||
-      !admin ||
+      // !admin ||
       !selectBoard ||
       !instituteType
     ) {
@@ -274,7 +274,7 @@ const superAdminController = {
       contact1,
       contact2,
       schemail,
-      admin,
+      // admin,
       selectBoard,
       instituteType,
       userId,
