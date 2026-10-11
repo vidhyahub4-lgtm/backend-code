@@ -274,7 +274,7 @@ async function getAttendanceByDate({
   }));
 }
 
-async function getAttendanceLogs({ schId, session, class: cls, section, date, student, limit, page }) {
+async function getAttendanceLogs({ schId, session, class: cls, section, date, from, to, student, limit, page }) {
   if (!schId) {
     const err = new Error("schId is required");
     err.status = 400;
@@ -285,7 +285,14 @@ async function getAttendanceLogs({ schId, session, class: cls, section, date, st
   if (cls) query.class = cls;
   if (section) query.section = section;
   if (student) query.student = student;
-  if (date) query.attendanceDate = startOfDay(date);
+  if (date) {
+    query.attendanceDate = startOfDay(date);
+  } else if (from || to) {
+    // date range of the attendance day that was edited (both ends inclusive)
+    query.attendanceDate = {};
+    if (from) query.attendanceDate.$gte = startOfDay(from);
+    if (to) query.attendanceDate.$lte = startOfDay(to);
+  }
 
   const size = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 500);
   const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * size;

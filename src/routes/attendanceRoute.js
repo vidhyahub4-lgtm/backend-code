@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const attendanceController = require("../controllers/attendancecontroller");
 const authMiddleware = require("../middileware/auth");
+const superAdminMiddleware = require("../middileware/superAdminMiddleware");
 // const { authenticate } = require("../middleware/auth");
 
 // router.use(authenticate);
 
 router.post("/mark", authMiddleware, attendanceController.markAttendance);
-router.get("/logs", authMiddleware, attendanceController.getAttendanceLogs);
+router.get("/logs", authMiddleware, superAdminMiddleware, attendanceController.getAttendanceLogs);
 router.get("/", authMiddleware, attendanceController.getAttendanceByDate);
 
 module.exports = router;

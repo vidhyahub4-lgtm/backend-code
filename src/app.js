@@ -32,6 +32,7 @@ app.use("/api/calendar", require("./routes/calendarRoutes"))
 
 app.use("/api/teachers", require("./routes/teacherRoute"));
 app.use("/api/attendance", require("./routes/attendanceRoute"));
+app.use("/api/dashboard", require("./routes/dashboardRoute"));
 
 app.use('/api/student', require('./routes/studentRoute') )
 //dont touch this section 
