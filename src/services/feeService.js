@@ -234,6 +234,8 @@ module.exports = {
       }
 
       for (const inst of installmentsByClass.get(classId) || []) {
+        console.log('en : ', en ,"inst : ", inst);
+        console.log('plan Class ', planClass)
         const built = buildDemandOps({
           schId,
           session,
