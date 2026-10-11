@@ -195,7 +195,7 @@
 
 const asyncHandler = require("../errorHandlers/asyncHandler");
 // const asyncHandler = require("../utils/asyncHandler");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 const feeDemandService = require("../services/feeService");
 const feeCollectionService = require("../services/feeCollectionService");
 
